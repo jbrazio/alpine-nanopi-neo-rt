@@ -1,0 +1,1895 @@
+diff -uNr --no-dereference linux-4.18/arch/arm/boot/dts/sun8i-a83t.dtsi linux-4.18-sunxi-ths-v3/arch/arm/boot/dts/sun8i-a83t.dtsi
+--- linux-4.18/arch/arm/boot/dts/sun8i-a83t.dtsi	2018-08-12 20:41:04.000000000 +0000
++++ linux-4.18-sunxi-ths-v3/arch/arm/boot/dts/sun8i-a83t.dtsi	2018-08-30 15:18:10.000000000 +0000
+@@ -50,6 +50,7 @@
+ #include <dt-bindings/reset/sun8i-a83t-ccu.h>
+ #include <dt-bindings/reset/sun8i-de2.h>
+ #include <dt-bindings/reset/sun8i-r-ccu.h>
++#include <dt-bindings/thermal/thermal.h>
+ 
+ / {
+ 	interrupt-parent = <&gic>;
+@@ -69,6 +70,9 @@
+ 			cci-control-port = <&cci_control0>;
+ 			enable-method = "allwinner,sun8i-a83t-smp";
+ 			reg = <0>;
++			#cooling-cells = <2>;
++			cooling-min-level = <0>;
++			cooling-max-level = <7>;
+ 		};
+ 
+ 		cpu@1 {
+@@ -107,6 +111,9 @@
+ 			cci-control-port = <&cci_control1>;
+ 			enable-method = "allwinner,sun8i-a83t-smp";
+ 			reg = <0x100>;
++			#cooling-cells = <2>;
++			cooling-min-level = <0>;
++			cooling-max-level = <7>;
+ 		};
+ 
+ 		cpu@101 {
+@@ -243,6 +250,22 @@
+ 			opp-microvolt = <840000>;
+ 			clock-latency-ns = <244144>; /* 8 32k periods */
+ 		};
++
++		opp-1608000000 {
++			opp-hz = /bits/ 64 <1608000000>;
++			opp-microvolt = <920000>;
++			clock-latency-ns = <244144>; /* 8 32k periods */
++		};
++		opp-1800000000 { /* BOOT FREQ */
++			opp-hz = /bits/ 64 <1800000000>;
++			opp-microvolt = <1000000>;
++			clock-latency-ns = <244144>; /* 8 32k periods */
++		};
++		opp-2016000000 {
++			opp-hz = /bits/ 64 <2016000000>;
++			opp-microvolt = <1080000>;
++			clock-latency-ns = <244144>; /* 8 32k periods */
++		};
+ 	};
+ 
+ 	cpu1_opp_table: opp_table1 {
+@@ -296,6 +319,22 @@
+ 			opp-microvolt = <840000>;
+ 			clock-latency-ns = <244144>; /* 8 32k periods */
+ 		};
++
++		opp-1608000000 {
++			opp-hz = /bits/ 64 <1608000000>;
++			opp-microvolt = <920000>;
++			clock-latency-ns = <244144>; /* 8 32k periods */
++		};
++		opp-1800000000 { /* BOOT FREQ */
++			opp-hz = /bits/ 64 <1800000000>;
++			opp-microvolt = <1000000>;
++			clock-latency-ns = <244144>; /* 8 32k periods */
++		};
++		opp-2016000000 {
++			opp-hz = /bits/ 64 <2016000000>;
++			opp-microvolt = <1080000>;
++			clock-latency-ns = <244144>; /* 8 32k periods */
++		};
+ 	};
+ 
+ 	soc {
+@@ -757,6 +796,14 @@
+ 			clocks = <&osc24M>;
+ 		};
+ 
++		ths: thermal-sensor@1f04000 {
++			compatible = "allwinner,sun8i-a83t-ths";
++			reg = <0x01f04000 0x100>;
++			interrupts = <GIC_SPI 41 IRQ_TYPE_LEVEL_HIGH>;
++			#thermal-sensor-cells = <1>;
++			#io-channel-cells = <0>;
++		};
++
+ 		watchdog@1c20ca0 {
+ 			compatible = "allwinner,sun6i-a31-wdt";
+ 			reg = <0x01c20ca0 0x20>;
+@@ -1027,4 +1074,100 @@
+ 			#size-cells = <0>;
+ 		};
+ 	};
++
++	thermal-zones {
++		cpu0_thermal: cpu0-thermal {
++			polling-delay-passive = <1000>;
++			polling-delay = <5000>;
++			thermal-sensors = <&ths 0>;
++
++			trips {
++				cpu0_warm: cpu_warm {
++					temperature = <70000>;
++					hysteresis = <2000>;
++					type = "passive";
++				};
++				cpu0_hot: cpu_hot {
++					temperature = <80000>;
++					hysteresis = <2000>;
++					type = "passive";
++				};
++				cpu0_very_hot: cpu_very_hot {
++					temperature = <90000>;
++					hysteresis = <2000>;
++					type = "passive";
++				};
++				cpu0_crit: cpu_crit {
++					temperature = <105000>;
++					hysteresis = <2000>;
++					type = "critical";
++				};
++			};
++
++			cooling-maps {
++				cpu_warm_limit_cpu {
++					trip = <&cpu0_warm>;
++					cooling-device = <&cpu0 THERMAL_NO_LIMIT 4>;
++				};
++				cpu_hot_limit_cpu {
++					trip = <&cpu0_hot>;
++					cooling-device = <&cpu0 5 5>;
++				};
++				cpu_very_hot_limit_cpu {
++					trip = <&cpu0_very_hot>;
++					cooling-device = <&cpu0 7 THERMAL_NO_LIMIT>;
++				};
++			};
++		};
++
++		cpu1_thermal: cpu1-thermal {
++			polling-delay-passive = <1000>;
++			polling-delay = <5000>;
++			thermal-sensors = <&ths 1>;
++
++			trips {
++				cpu1_warm: cpu_warm {
++					temperature = <70000>;
++					hysteresis = <2000>;
++					type = "passive";
++				};
++				cpu1_hot: cpu_hot {
++					temperature = <80000>;
++					hysteresis = <2000>;
++					type = "passive";
++				};
++				cpu1_very_hot: cpu_very_hot {
++					temperature = <90000>;
++					hysteresis = <2000>;
++					type = "passive";
++				};
++				cpu1_crit: cpu_crit {
++					temperature = <105000>;
++					hysteresis = <2000>;
++					type = "critical";
++				};
++			};
++
++			cooling-maps {
++				cpu_warm_limit_cpu {
++					trip = <&cpu1_warm>;
++					cooling-device = <&cpu100 THERMAL_NO_LIMIT 4>;
++				};
++				cpu_hot_limit_cpu {
++					trip = <&cpu1_hot>;
++					cooling-device = <&cpu100 5 5>;
++				};
++				cpu_very_hot_limit_cpu {
++					trip = <&cpu1_very_hot>;
++					cooling-device = <&cpu100 7 THERMAL_NO_LIMIT>;
++				};
++			};
++		};
++
++		gpu_thermal: gpu-thermal {
++			polling-delay-passive = <1000>;
++			polling-delay = <5000>;
++			thermal-sensors = <&ths 2>;
++		};
++	};
+ };
+diff -uNr --no-dereference linux-4.18/arch/arm/boot/dts/sun8i-h3.dtsi linux-4.18-sunxi-ths-v3/arch/arm/boot/dts/sun8i-h3.dtsi
+--- linux-4.18/arch/arm/boot/dts/sun8i-h3.dtsi	2018-08-12 20:41:04.000000000 +0000
++++ linux-4.18-sunxi-ths-v3/arch/arm/boot/dts/sun8i-h3.dtsi	2018-08-30 15:18:10.000000000 +0000
+@@ -78,6 +78,8 @@
+ 			clock-names = "cpu";
+ 			operating-points-v2 = <&cpu0_opp_table>;
+ 			#cooling-cells = <2>;
++			cooling-min-level = <0>;
++			cooling-max-level = <15>;
+ 		};
+ 
+ 		cpu@1 {
+@@ -102,6 +104,49 @@
+ 		};
+ 	};
+ 
++	soc {
++		sid: eeprom@1c14000 {
++			#address-cells = <1>;
++			#size-cells = <1>;
++			compatible = "allwinner,sun8i-h3-sid";
++			reg = <0x01c14000 0x400>;
++
++			/* Data cells */
++			thermal_calibration: calib@234 {
++				reg = <0x234 0x8>;
++			};
++		};
++	};
++
++	thermal-zones {
++		cpu-thermal {
++			/* milliseconds */
++			polling-delay-passive = <250>;
++			polling-delay = <1000>;
++			thermal-sensors = <&ths>;
++
++			trips {
++				cpu_hot_trip: cpu-warm {
++					temperature = <65000>;
++					hysteresis = <2000>;
++					type = "passive";
++				};
++				cpu_very_hot_trip: cpu-very-hot {
++					temperature = <90000>;
++					hysteresis = <2000>;
++					type = "critical";
++				};
++			};
++
++			cooling-maps {
++				cpu-warm-limit {
++					trip = <&cpu_hot_trip>;
++					cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++				};
++			};
++		};
++	};
++
+ 	timer {
+ 		compatible = "arm,armv7-timer";
+ 		interrupts = <GIC_PPI 13 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>,
+@@ -185,3 +230,10 @@
+ &pio {
+ 	compatible = "allwinner,sun8i-h3-pinctrl";
+ };
++
++&ths {
++	compatible = "allwinner,sun8i-h3-ths";
++	#thermal-sensor-cells = <0>;
++	nvmem-cells = <&thermal_calibration>;
++	nvmem-cell-names = "calibration";
++};
+diff -uNr --no-dereference linux-4.18/arch/arm/boot/dts/sunxi-h3-h5.dtsi linux-4.18-sunxi-ths-v3/arch/arm/boot/dts/sunxi-h3-h5.dtsi
+--- linux-4.18/arch/arm/boot/dts/sunxi-h3-h5.dtsi	2018-08-12 20:41:04.000000000 +0000
++++ linux-4.18-sunxi-ths-v3/arch/arm/boot/dts/sunxi-h3-h5.dtsi	2018-08-30 15:18:10.000000000 +0000
+@@ -47,6 +47,7 @@
+ #include <dt-bindings/reset/sun8i-de2.h>
+ #include <dt-bindings/reset/sun8i-h3-ccu.h>
+ #include <dt-bindings/reset/sun8i-r-ccu.h>
++#include <dt-bindings/thermal/thermal.h>
+ 
+ / {
+ 	interrupt-parent = <&gic>;
+@@ -488,6 +489,15 @@
+ 			};
+ 		};
+ 
++		ths: thermal-sensor@1c25000 {
++			reg = <0x01c25000 0x400>;
++			interrupts = <GIC_SPI 31 IRQ_TYPE_LEVEL_HIGH>;
++			clocks = <&ccu CLK_BUS_THS>, <&ccu CLK_THS>;
++			clock-names = "bus", "mod";
++			resets = <&ccu RST_BUS_THS>;
++			#io-channel-cells = <0>;
++		};
++
+ 		timer@1c20c00 {
+ 			compatible = "allwinner,sun4i-a10-timer";
+ 			reg = <0x01c20c00 0xa0>;
+diff -uNr --no-dereference linux-4.18/arch/arm/configs/sunxi_defconfig linux-4.18-sunxi-ths-v3/arch/arm/configs/sunxi_defconfig
+--- linux-4.18/arch/arm/configs/sunxi_defconfig	2018-08-12 20:41:04.000000000 +0000
++++ linux-4.18-sunxi-ths-v3/arch/arm/configs/sunxi_defconfig	2018-08-30 15:18:10.000000000 +0000
+@@ -132,6 +132,7 @@
+ # CONFIG_IOMMU_SUPPORT is not set
+ CONFIG_EXTCON=y
+ CONFIG_IIO=y
++CONFIG_SUN4I_GPADC=y
+ CONFIG_AXP20X_ADC=y
+ CONFIG_PWM=y
+ CONFIG_PWM_SUN4I=y
+diff -uNr --no-dereference linux-4.18/Documentation/devicetree/bindings/iio/adc/sun4i-gpadc.txt linux-4.18-sunxi-ths-v3/Documentation/devicetree/bindings/iio/adc/sun4i-gpadc.txt
+--- linux-4.18/Documentation/devicetree/bindings/iio/adc/sun4i-gpadc.txt	1970-01-01 00:00:00.000000000 +0000
++++ linux-4.18-sunxi-ths-v3/Documentation/devicetree/bindings/iio/adc/sun4i-gpadc.txt	2018-08-30 15:18:10.000000000 +0000
+@@ -0,0 +1,71 @@
++Allwinner SoCs' GPADC Device Tree bindings
++------------------------------------------
++The Allwinner SoCs all have an ADC that can also act as a thermal sensor
++and sometimes as a touchscreen controller.
++
++Required properties:
++  - compatible: must contain one of the following compatibles:
++		- "allwinner,sun8i-a33-ths"
++		- "allwinner,sun8i-h3-ths"
++		- "allwinner,sun8i-a83t-ths"
++  - reg: mmio address range of the chip,
++  - #thermal-sensor-cells:
++		Please refer <devicetree/bindings/thermal/thermal.txt>,
++  - #io-channel-cells: shall be 0,
++
++Required properties for the following compatibles:
++		- "allwinner,sun8i-h3-ths"
++		- "allwinner,sun8i-a83t-ths"
++  - interrupts: the sampling interrupt of the ADC,
++
++Required properties for the following compatibles:
++		- "allwinner,sun8i-h3-ths"
++  - clocks: the bus clock and the input clock of the ADC,
++  - clock-names: should be "bus" and "mod",
++  - resets: the bus reset of the ADC,
++
++Optional properties for the following compatibles:
++		- "allwinner,sun8i-h3-ths"
++		- "allwinner,sun8i-a83t-ths"
++  - nvmem-cells: A phandle to the calibration data provided by a nvmem device.
++  - nvmem-cell-names: Should be "calibration".
++
++Details see: bindings/nvmem/nvmem.txt
++
++Example for A33:
++	ths: ths@1c25000 {
++		compatible = "allwinner,sun8i-a33-ths";
++		reg = <0x01c25000 0x100>;
++		#thermal-sensor-cells = <0>;
++		#io-channel-cells = <0>;
++	};
++
++Example for H3:
++	ths: thermal-sensor@1c25000 {
++		compatible = "allwinner,sun8i-h3-ths";
++		reg = <0x01c25000 0x400>;
++		clocks = <&ccu CLK_BUS_THS>, <&ccu CLK_THS>;
++		clock-names = "bus", "mod";
++		resets = <&ccu RST_BUS_THS>;
++		interrupts = <GIC_SPI 31 IRQ_TYPE_LEVEL_HIGH>;
++		#thermal-sensor-cells = <0>;
++		#io-channel-cells = <0>;
++	};
++
++sun4i, sun5i and sun6i SoCs are also supported via these bindings:
++
++Required properties:
++ - compatible: "allwinner,sun4i-a10-gpadc", "allwinner,sun5i-a13-gpadc" or
++   "allwinner,sun6i-a31-gpadc"
++ - reg: mmio address range of the chip
++ - interrupts: interrupt to which the chip is connected
++ - #thermal-sensor-cells: shall be 0
++
++Example:
++
++	gpadc: gpadc@1c25000 {
++		compatible = "allwinner,sun4i-a10-gpadc";
++		reg = <0x01c25000 0x100>;
++		interrupts = <29>;
++		#thermal-sensor-cells = <0>;
++	};
+diff -uNr --no-dereference linux-4.18/Documentation/devicetree/bindings/input/touchscreen/sun4i-ts.txt linux-4.18-sunxi-ths-v3/Documentation/devicetree/bindings/input/touchscreen/sun4i-ts.txt
+--- linux-4.18/Documentation/devicetree/bindings/input/touchscreen/sun4i-ts.txt	1970-01-01 00:00:00.000000000 +0000
++++ linux-4.18-sunxi-ths-v3/Documentation/devicetree/bindings/input/touchscreen/sun4i-ts.txt	2018-08-30 15:18:10.000000000 +0000
+@@ -0,0 +1,38 @@
++Allwinner SoCs' sun4i resistive touchscreen controller
++--------------------------------------
++
++Required properties:
++ - compatible: "allwinner,sun4i-a10-ts", "allwinner,sun5i-a13-ts" or
++   "allwinner,sun6i-a31-ts"
++ - reg: mmio address range of the chip
++ - interrupts: interrupt to which the chip is connected
++ - #thermal-sensor-cells: shall be 0
++
++Optional properties:
++ - allwinner,ts-attached	 : boolean indicating that an actual touchscreen
++				   is attached to the controller
++ - allwinner,tp-sensitive-adjust : integer (4 bits)
++				   adjust sensitivity of pen down detection
++				   between 0 (least sensitive) and 15
++				   (defaults to 15)
++ - allwinner,filter-type	 : integer (2 bits)
++				   select median and averaging filter
++				   samples used for median / averaging filter
++				   0: 4/2
++				   1: 5/3
++				   2: 8/4
++				   3: 16/8
++				   (defaults to 1)
++
++Example:
++
++	rtp: rtp@1c25000 {
++		compatible = "allwinner,sun4i-a10-ts";
++		reg = <0x01c25000 0x100>;
++		interrupts = <29>;
++		allwinner,ts-attached;
++		#thermal-sensor-cells = <0>;
++		/* sensitive/noisy touch panel */
++		allwinner,tp-sensitive-adjust = <0>;
++		allwinner,filter-type = <3>;
++	};
+diff -uNr --no-dereference linux-4.18/Documentation/devicetree/bindings/mfd/sun4i-gpadc.txt linux-4.18-sunxi-ths-v3/Documentation/devicetree/bindings/mfd/sun4i-gpadc.txt
+--- linux-4.18/Documentation/devicetree/bindings/mfd/sun4i-gpadc.txt	2018-08-12 20:41:04.000000000 +0000
++++ linux-4.18-sunxi-ths-v3/Documentation/devicetree/bindings/mfd/sun4i-gpadc.txt	1970-01-01 00:00:00.000000000 +0000
+@@ -1,59 +0,0 @@
+-Allwinner SoCs' GPADC Device Tree bindings
+-------------------------------------------
+-The Allwinner SoCs all have an ADC that can also act as a thermal sensor
+-and sometimes as a touchscreen controller.
+-
+-Required properties:
+-  - compatible: "allwinner,sun8i-a33-ths",
+-  - reg: mmio address range of the chip,
+-  - #thermal-sensor-cells: shall be 0,
+-  - #io-channel-cells: shall be 0,
+-
+-Example:
+-	ths: ths@1c25000 {
+-		compatible = "allwinner,sun8i-a33-ths";
+-		reg = <0x01c25000 0x100>;
+-		#thermal-sensor-cells = <0>;
+-		#io-channel-cells = <0>;
+-	};
+-
+-sun4i, sun5i and sun6i SoCs are also supported via the older binding:
+-
+-sun4i resistive touchscreen controller
+---------------------------------------
+-
+-Required properties:
+- - compatible: "allwinner,sun4i-a10-ts", "allwinner,sun5i-a13-ts" or
+-   "allwinner,sun6i-a31-ts"
+- - reg: mmio address range of the chip
+- - interrupts: interrupt to which the chip is connected
+- - #thermal-sensor-cells: shall be 0
+-
+-Optional properties:
+- - allwinner,ts-attached	 : boolean indicating that an actual touchscreen
+-				   is attached to the controller
+- - allwinner,tp-sensitive-adjust : integer (4 bits)
+-				   adjust sensitivity of pen down detection
+-				   between 0 (least sensitive) and 15
+-				   (defaults to 15)
+- - allwinner,filter-type	 : integer (2 bits)
+-				   select median and averaging filter
+-				   samples used for median / averaging filter
+-				   0: 4/2
+-				   1: 5/3
+-				   2: 8/4
+-				   3: 16/8
+-				   (defaults to 1)
+-
+-Example:
+-
+-	rtp: rtp@1c25000 {
+-		compatible = "allwinner,sun4i-a10-ts";
+-		reg = <0x01c25000 0x100>;
+-		interrupts = <29>;
+-		allwinner,ts-attached;
+-		#thermal-sensor-cells = <0>;
+-		/* sensitive/noisy touch panel */
+-		allwinner,tp-sensitive-adjust = <0>;
+-		allwinner,filter-type = <3>;
+-	};
+diff -uNr --no-dereference linux-4.18/drivers/iio/adc/Kconfig linux-4.18-sunxi-ths-v3/drivers/iio/adc/Kconfig
+--- linux-4.18/drivers/iio/adc/Kconfig	2018-08-12 20:41:04.000000000 +0000
++++ linux-4.18-sunxi-ths-v3/drivers/iio/adc/Kconfig	2018-08-30 15:18:10.000000000 +0000
+@@ -713,13 +713,16 @@
+ 	  array module parameter.
+ 
+ config SUN4I_GPADC
+-	tristate "Support for the Allwinner SoCs GPADC"
++	tristate "Allwinner sunxi platforms' GPADC/Thermal driver"
++	select REGMAP_MMIO
++	select REGMAP_IRQ
+ 	depends on IIO
+-	depends on MFD_SUN4I_GPADC || MACH_SUN8I
+-	depends on THERMAL || !THERMAL_OF
++	depends on ARCH_SUNXI || MACH_SUN8I
++	depends on THERMAL && THERMAL_OF
+ 	help
+ 	  Say yes here to build support for Allwinner (A10, A13 and A31) SoCs
+-	  GPADC. This ADC provides 4 channels which can be used as an ADC or as
++	  GPADC or newer SOCs (A33, H3, A83T, ...) Thermal sensor driver.
++	  This ADC provides 4 channels which can be used as an ADC or as
+ 	  a touchscreen input and one channel for thermal sensor.
+ 
+ 	  The thermal sensor slows down ADC readings and can be disabled by
+diff -uNr --no-dereference linux-4.18/drivers/iio/adc/sun4i-gpadc-iio.c linux-4.18-sunxi-ths-v3/drivers/iio/adc/sun4i-gpadc-iio.c
+--- linux-4.18/drivers/iio/adc/sun4i-gpadc-iio.c	2018-08-12 20:41:04.000000000 +0000
++++ linux-4.18-sunxi-ths-v3/drivers/iio/adc/sun4i-gpadc-iio.c	2018-08-30 15:18:10.000000000 +0000
+@@ -22,22 +22,25 @@
+  * shutdown for not being used.
+  */
+ 
++#include <linux/clk.h>
+ #include <linux/completion.h>
+ #include <linux/interrupt.h>
+ #include <linux/io.h>
+ #include <linux/module.h>
++#include <linux/nvmem-consumer.h>
+ #include <linux/of.h>
+ #include <linux/of_device.h>
+ #include <linux/platform_device.h>
+ #include <linux/pm_runtime.h>
+ #include <linux/regmap.h>
++#include <linux/reset.h>
+ #include <linux/thermal.h>
+ #include <linux/delay.h>
+ 
+ #include <linux/iio/iio.h>
+ #include <linux/iio/driver.h>
+ #include <linux/iio/machine.h>
+-#include <linux/mfd/sun4i-gpadc.h>
++#include <linux/iio/adc/sun4i-gpadc.h>
+ 
+ static unsigned int sun4i_gpadc_chan_select(unsigned int chan)
+ {
+@@ -49,6 +52,8 @@
+ 	return SUN6I_GPADC_CTRL1_ADC_CHAN_SELECT(chan);
+ }
+ 
++struct sun4i_gpadc_iio;
++
+ struct gpadc_data {
+ 	int		temp_offset;
+ 	int		temp_scale;
+@@ -56,7 +61,30 @@
+ 	unsigned int	tp_adc_select;
+ 	unsigned int	(*adc_chan_select)(unsigned int chan);
+ 	unsigned int	adc_chan_mask;
+-};
++	bool		adc_channel;
++	irqreturn_t	(*ths_irq_thread)(int irq, void *dev_id);
++	int		(*ths_suspend)(struct sun4i_gpadc_iio *info);
++	int		(*ths_resume)(struct sun4i_gpadc_iio *info);
++	bool		support_irq;
++	bool		has_bus_clk;
++	bool		has_bus_rst;
++	bool		has_mod_clk;
++	u32		temp_data_base;
++	int		sensor_count;
++	bool		supports_nvmem;
++	u32		ths_irq_clear;
++};
++
++static irqreturn_t sun4i_gpadc_data_irq_handler(int irq, void *dev_id);
++
++static int sun4i_ths_resume(struct sun4i_gpadc_iio *info);
++static int sun4i_ths_suspend(struct sun4i_gpadc_iio *info);
++
++static int sun8i_h3_ths_resume(struct sun4i_gpadc_iio *info);
++static int sun8i_h3_ths_suspend(struct sun4i_gpadc_iio *info);
++static irqreturn_t sunx8i_h3_irq_thread(int irq, void *data);
++
++static int sun8i_a83t_ths_resume(struct sun4i_gpadc_iio *info);
+ 
+ static const struct gpadc_data sun4i_gpadc_data = {
+ 	.temp_offset = -1932,
+@@ -65,6 +93,13 @@
+ 	.tp_adc_select = SUN4I_GPADC_CTRL1_TP_ADC_SELECT,
+ 	.adc_chan_select = &sun4i_gpadc_chan_select,
+ 	.adc_chan_mask = SUN4I_GPADC_CTRL1_ADC_CHAN_MASK,
++	.adc_channel = true,
++	.ths_irq_thread = sun4i_gpadc_data_irq_handler,
++	.support_irq = true,
++	.temp_data_base = SUN4I_GPADC_TEMP_DATA,
++	.ths_resume = sun4i_ths_resume,
++	.ths_suspend = sun4i_ths_suspend,
++	.sensor_count = 1,
+ };
+ 
+ static const struct gpadc_data sun5i_gpadc_data = {
+@@ -74,6 +109,13 @@
+ 	.tp_adc_select = SUN4I_GPADC_CTRL1_TP_ADC_SELECT,
+ 	.adc_chan_select = &sun4i_gpadc_chan_select,
+ 	.adc_chan_mask = SUN4I_GPADC_CTRL1_ADC_CHAN_MASK,
++	.adc_channel = true,
++	.ths_irq_thread = sun4i_gpadc_data_irq_handler,
++	.support_irq = true,
++	.temp_data_base = SUN4I_GPADC_TEMP_DATA,
++	.ths_resume = sun4i_ths_resume,
++	.ths_suspend = sun4i_ths_suspend,
++	.sensor_count = 1,
+ };
+ 
+ static const struct gpadc_data sun6i_gpadc_data = {
+@@ -83,12 +125,60 @@
+ 	.tp_adc_select = SUN6I_GPADC_CTRL1_TP_ADC_SELECT,
+ 	.adc_chan_select = &sun6i_gpadc_chan_select,
+ 	.adc_chan_mask = SUN6I_GPADC_CTRL1_ADC_CHAN_MASK,
++	.adc_channel = true,
++	.ths_irq_thread = sun4i_gpadc_data_irq_handler,
++	.support_irq = true,
++	.temp_data_base = SUN4I_GPADC_TEMP_DATA,
++	.ths_resume = sun4i_ths_resume,
++	.ths_suspend = sun4i_ths_suspend,
++	.sensor_count = 1,
+ };
+ 
+ static const struct gpadc_data sun8i_a33_gpadc_data = {
+ 	.temp_offset = -1662,
+ 	.temp_scale = 162,
+-	.tp_mode_en = SUN8I_GPADC_CTRL1_CHOP_TEMP_EN,
++	.tp_mode_en = SUN8I_A33_GPADC_CTRL1_CHOP_TEMP_EN,
++	.temp_data_base = SUN4I_GPADC_TEMP_DATA,
++	.ths_resume = sun4i_ths_resume,
++	.ths_suspend = sun4i_ths_suspend,
++	.sensor_count = 1,
++};
++
++static const struct gpadc_data sun8i_h3_ths_data = {
++	.temp_offset = -1791,
++	.temp_scale = -121,
++	.temp_data_base = SUN8I_H3_THS_TDATA0,
++	.ths_irq_thread = sunx8i_h3_irq_thread,
++	.support_irq = true,
++	.has_bus_clk = true,
++	.has_bus_rst = true,
++	.has_mod_clk = true,
++	.sensor_count = 1,
++	.supports_nvmem = true,
++	.ths_resume = sun8i_h3_ths_resume,
++	.ths_suspend = sun8i_h3_ths_suspend,
++	.ths_irq_clear = SUN8I_H3_THS_INTS_TDATA_IRQ_0,
++};
++
++static const struct gpadc_data sun8i_a83t_ths_data = {
++	.temp_offset = -2724,
++	.temp_scale = -70,
++	.temp_data_base = SUN8I_H3_THS_TDATA0,
++	.ths_irq_thread = sunx8i_h3_irq_thread,
++	.support_irq = true,
++	.sensor_count = 3,
++	.supports_nvmem = true,
++	.ths_resume = sun8i_a83t_ths_resume,
++	.ths_suspend = sun8i_h3_ths_suspend,
++	.ths_irq_clear = SUN8I_H3_THS_INTS_TDATA_IRQ_0 |
++			SUN8I_A83T_THS_INTS_TDATA_IRQ_1 |
++			SUN8I_A83T_THS_INTS_TDATA_IRQ_2,
++};
++
++struct sun4i_sensor_tzd {
++	struct sun4i_gpadc_iio		*info;
++	struct thermal_zone_device	*tzd;
++	unsigned int			sensor_id;
+ };
+ 
+ struct sun4i_gpadc_iio {
+@@ -96,34 +186,18 @@
+ 	struct completion		completion;
+ 	int				temp_data;
+ 	u32				adc_data;
++	unsigned int			irq_data_type;
+ 	struct regmap			*regmap;
+-	unsigned int			fifo_data_irq;
+-	atomic_t			ignore_fifo_data_irq;
+-	unsigned int			temp_data_irq;
+-	atomic_t			ignore_temp_data_irq;
++	unsigned int			irq;
+ 	const struct gpadc_data		*data;
+-	bool				no_irq;
+ 	/* prevents concurrent reads of temperature and ADC */
+ 	struct mutex			mutex;
+-	struct thermal_zone_device	*tzd;
++	struct sun4i_sensor_tzd		tzds[MAX_SENSOR_COUNT];
+ 	struct device			*sensor_device;
+-};
+-
+-#define SUN4I_GPADC_ADC_CHANNEL(_channel, _name) {		\
+-	.type = IIO_VOLTAGE,					\
+-	.indexed = 1,						\
+-	.channel = _channel,					\
+-	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),		\
+-	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),	\
+-	.datasheet_name = _name,				\
+-}
+-
+-static struct iio_map sun4i_gpadc_hwmon_maps[] = {
+-	{
+-		.adc_channel_label = "temp_adc",
+-		.consumer_dev_name = "iio_hwmon.0",
+-	},
+-	{ /* sentinel */ },
++	struct clk			*bus_clk;
++	struct clk			*mod_clk;
++	struct reset_control		*reset;
++	u32				calibration_data[2];
+ };
+ 
+ static const struct iio_chan_spec sun4i_gpadc_channels[] = {
+@@ -140,23 +214,6 @@
+ 	},
+ };
+ 
+-static const struct iio_chan_spec sun4i_gpadc_channels_no_temp[] = {
+-	SUN4I_GPADC_ADC_CHANNEL(0, "adc_chan0"),
+-	SUN4I_GPADC_ADC_CHANNEL(1, "adc_chan1"),
+-	SUN4I_GPADC_ADC_CHANNEL(2, "adc_chan2"),
+-	SUN4I_GPADC_ADC_CHANNEL(3, "adc_chan3"),
+-};
+-
+-static const struct iio_chan_spec sun8i_a33_gpadc_channels[] = {
+-	{
+-		.type = IIO_TEMP,
+-		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
+-				      BIT(IIO_CHAN_INFO_SCALE) |
+-				      BIT(IIO_CHAN_INFO_OFFSET),
+-		.datasheet_name = "temp_adc",
+-	},
+-};
+-
+ static const struct regmap_config sun4i_gpadc_regmap_config = {
+ 	.reg_bits = 32,
+ 	.val_bits = 32,
+@@ -164,6 +221,20 @@
+ 	.fast_io = true,
+ };
+ 
++static int sun4i_gpadc_irq_init(struct sun4i_gpadc_iio *info)
++{
++	u32 reg;
++
++	if (info->irq_data_type == SUN4I_GPADC_IRQ_FIFO_DATA)
++		reg = SUN4I_GPADC_INT_FIFOC_TEMP_IRQ_EN;
++	else
++		reg = SUN4I_GPADC_INT_FIFOC_TEMP_IRQ_EN;
++
++	regmap_write(info->regmap, SUN4I_GPADC_INT_FIFOC, reg);
++
++	return 0;
++}
++
+ static int sun4i_prepare_for_irq(struct iio_dev *indio_dev, int channel,
+ 				 unsigned int irq)
+ {
+@@ -185,7 +256,7 @@
+ 	if (ret)
+ 		return ret;
+ 
+-	if (irq == info->fifo_data_irq) {
++	if (irq == SUN4I_GPADC_IRQ_FIFO_DATA) {
+ 		ret = regmap_write(info->regmap, SUN4I_GPADC_CTRL1,
+ 				   info->data->tp_mode_en |
+ 				   info->data->tp_adc_select |
+@@ -206,6 +277,8 @@
+ 		ret = regmap_write(info->regmap, SUN4I_GPADC_CTRL1,
+ 				   info->data->tp_mode_en);
+ 	}
++	if (info->data->support_irq)
++		sun4i_gpadc_irq_init(info);
+ 
+ 	if (ret)
+ 		return ret;
+@@ -228,11 +301,12 @@
+ 
+ 	mutex_lock(&info->mutex);
+ 
++	info->irq_data_type = irq;
+ 	ret = sun4i_prepare_for_irq(indio_dev, channel, irq);
+ 	if (ret)
+ 		goto err;
+ 
+-	enable_irq(irq);
++	enable_irq(info->irq);
+ 
+ 	/*
+ 	 * The temperature sensor throws an interruption periodically (currently
+@@ -246,7 +320,7 @@
+ 		goto err;
+ 	}
+ 
+-	if (irq == info->fifo_data_irq)
++	if (irq == SUN4I_GPADC_IRQ_FIFO_DATA)
+ 		*val = info->adc_data;
+ 	else
+ 		*val = info->temp_data;
+@@ -256,7 +330,7 @@
+ 
+ err:
+ 	pm_runtime_put_autosuspend(indio_dev->dev.parent);
+-	disable_irq(irq);
++	disable_irq(info->irq);
+ 	mutex_unlock(&info->mutex);
+ 
+ 	return ret;
+@@ -265,27 +339,28 @@
+ static int sun4i_gpadc_adc_read(struct iio_dev *indio_dev, int channel,
+ 				int *val)
+ {
+-	struct sun4i_gpadc_iio *info = iio_priv(indio_dev);
+-
+-	return sun4i_gpadc_read(indio_dev, channel, val, info->fifo_data_irq);
++	return sun4i_gpadc_read(indio_dev, channel, val,
++			SUN4I_GPADC_IRQ_FIFO_DATA);
+ }
+ 
+-static int sun4i_gpadc_temp_read(struct iio_dev *indio_dev, int *val)
++static int sun4i_gpadc_temp_read(struct iio_dev *indio_dev, int *val,
++				int sensor)
+ {
+ 	struct sun4i_gpadc_iio *info = iio_priv(indio_dev);
+ 
+-	if (info->no_irq) {
+-		pm_runtime_get_sync(indio_dev->dev.parent);
++	if (info->data->adc_channel)
++		return sun4i_gpadc_read(indio_dev, 0, val,
++				SUN4I_GPADC_IRQ_TEMP_DATA);
+ 
+-		regmap_read(info->regmap, SUN4I_GPADC_TEMP_DATA, val);
++	pm_runtime_get_sync(indio_dev->dev.parent);
+ 
+-		pm_runtime_mark_last_busy(indio_dev->dev.parent);
+-		pm_runtime_put_autosuspend(indio_dev->dev.parent);
++	regmap_read(info->regmap, info->data->temp_data_base + 0x4 * sensor,
++			val);
+ 
+-		return 0;
+-	}
++	pm_runtime_mark_last_busy(indio_dev->dev.parent);
++	pm_runtime_put_autosuspend(indio_dev->dev.parent);
+ 
+-	return sun4i_gpadc_read(indio_dev, 0, val, info->temp_data_irq);
++	return 0;
+ }
+ 
+ static int sun4i_gpadc_temp_offset(struct iio_dev *indio_dev, int *val)
+@@ -324,7 +399,7 @@
+ 			ret = sun4i_gpadc_adc_read(indio_dev, chan->channel,
+ 						   val);
+ 		else
+-			ret = sun4i_gpadc_temp_read(indio_dev, val);
++			ret = sun4i_gpadc_temp_read(indio_dev, val, 0);
+ 
+ 		if (ret)
+ 			return ret;
+@@ -354,42 +429,74 @@
+ 	.read_raw = sun4i_gpadc_read_raw,
+ };
+ 
+-static irqreturn_t sun4i_gpadc_temp_data_irq_handler(int irq, void *dev_id)
++static irqreturn_t sun4i_gpadc_data_irq_handler(int irq, void *dev_id)
+ {
+ 	struct sun4i_gpadc_iio *info = dev_id;
+ 
+-	if (atomic_read(&info->ignore_temp_data_irq))
+-		goto out;
+-
+-	if (!regmap_read(info->regmap, SUN4I_GPADC_TEMP_DATA, &info->temp_data))
+-		complete(&info->completion);
+-
+-out:
++	if (info->irq_data_type == SUN4I_GPADC_IRQ_FIFO_DATA) {
++		/* read fifo data */
++		if (!regmap_read(info->regmap, SUN4I_GPADC_DATA,
++					&info->adc_data))
++			complete(&info->completion);
++	} else {
++		/* read temp data */
++		if (!regmap_read(info->regmap, SUN4I_GPADC_TEMP_DATA,
++					&info->temp_data))
++			complete(&info->completion);
++	}
+ 	return IRQ_HANDLED;
+ }
+ 
+-static irqreturn_t sun4i_gpadc_fifo_data_irq_handler(int irq, void *dev_id)
++static irqreturn_t sunx8i_h3_irq_thread(int irq, void *data)
+ {
+-	struct sun4i_gpadc_iio *info = dev_id;
++	struct sun4i_gpadc_iio *info = data;
++	int i;
+ 
+-	if (atomic_read(&info->ignore_fifo_data_irq))
+-		goto out;
++	regmap_write(info->regmap, SUN8I_H3_THS_STAT,
++			info->data->ths_irq_clear);
+ 
+-	if (!regmap_read(info->regmap, SUN4I_GPADC_DATA, &info->adc_data))
+-		complete(&info->completion);
++	for (i = 0; i < info->data->sensor_count; i++)
++		thermal_zone_device_update(info->tzds[i].tzd,
++						THERMAL_EVENT_TEMP_SAMPLE);
+ 
+-out:
+ 	return IRQ_HANDLED;
+ }
+ 
++static int sun8i_h3_calibrate(struct sun4i_gpadc_iio *info)
++{
++//	regmap_write(info->regmap, SUNXI_THS_CDATA_0_1,
++//			info->calibration_data[0]);
++//	regmap_write(info->regmap, SUNXI_THS_CDATA_2_3,
++//			info->calibration_data[1]);
++
++	return 0;
++}
++
+ static int sun4i_gpadc_runtime_suspend(struct device *dev)
+ {
+ 	struct sun4i_gpadc_iio *info = iio_priv(dev_get_drvdata(dev));
++	return info->data->ths_suspend(info);
++}
++
++static int sun4i_ths_suspend(struct sun4i_gpadc_iio *info)
++{
+ 
+ 	/* Disable the ADC on IP */
+ 	regmap_write(info->regmap, SUN4I_GPADC_CTRL1, 0);
+ 	/* Disable temperature sensor on IP */
+ 	regmap_write(info->regmap, SUN4I_GPADC_TPR, 0);
++	/* Disable irq*/
++	regmap_write(info->regmap, SUN4I_GPADC_INT_FIFOC, 0);
++
++	return 0;
++}
++
++static int sun8i_h3_ths_suspend(struct sun4i_gpadc_iio *info)
++{
++	/* Disable ths interrupt */
++	regmap_write(info->regmap, SUN8I_H3_THS_INTC, 0x0);
++	/* Disable temperature sensor */
++	regmap_write(info->regmap, SUN8I_H3_THS_CTRL2, 0x0);
+ 
+ 	return 0;
+ }
+@@ -397,7 +504,11 @@
+ static int sun4i_gpadc_runtime_resume(struct device *dev)
+ {
+ 	struct sun4i_gpadc_iio *info = iio_priv(dev_get_drvdata(dev));
++	return info->data->ths_resume(info);
++}
+ 
++static int sun4i_ths_resume(struct sun4i_gpadc_iio *info)
++{
+ 	/* clkin = 6MHz */
+ 	regmap_write(info->regmap, SUN4I_GPADC_CTRL0,
+ 		     SUN4I_GPADC_CTRL0_ADC_CLK_DIVIDER(2) |
+@@ -412,15 +523,86 @@
+ 		     SUN4I_GPADC_TPR_TEMP_ENABLE |
+ 		     SUN4I_GPADC_TPR_TEMP_PERIOD(800));
+ 
++
++	return 0;
++}
++
++static int sun8i_h3_ths_resume(struct sun4i_gpadc_iio *info)
++{
++	u32 value;
++
++	sun8i_h3_calibrate(info);
++
++	regmap_write(info->regmap, SUN8I_H3_THS_CTRL0,
++			SUN4I_GPADC_CTRL0_T_ACQ(0xff));
++
++	regmap_write(info->regmap, SUN8I_H3_THS_CTRL2,
++			SUN8I_H3_THS_ACQ1(0x3f));
++
++	regmap_write(info->regmap, SUN8I_H3_THS_STAT,
++			SUN8I_H3_THS_INTS_TDATA_IRQ_0);
++
++	regmap_write(info->regmap, SUN8I_H3_THS_FILTER,
++			SUN4I_GPADC_CTRL3_FILTER_EN |
++			SUN4I_GPADC_CTRL3_FILTER_TYPE(0x2));
++
++	regmap_write(info->regmap, SUN8I_H3_THS_INTC,
++			SUN8I_H3_THS_INTC_TDATA_IRQ_EN0 |
++			SUN8I_H3_THS_TEMP_PERIOD(0x55));
++
++	regmap_read(info->regmap, SUN8I_H3_THS_CTRL2, &value);
++
++	regmap_write(info->regmap, SUN8I_H3_THS_CTRL2,
++			SUN8I_H3_THS_TEMP_SENSE_EN0 | value);
++
++	return 0;
++}
++
++static int sun8i_a83t_ths_resume(struct sun4i_gpadc_iio *info)
++{
++	u32 value;
++
++	sun8i_h3_calibrate(info);
++
++	regmap_write(info->regmap, SUN8I_H3_THS_CTRL0,
++			SUN4I_GPADC_CTRL0_T_ACQ(0x13f));
++
++	regmap_write(info->regmap, SUN8I_H3_THS_CTRL2,
++			SUN8I_H3_THS_ACQ1(0x13f));
++
++	regmap_write(info->regmap, SUN8I_H3_THS_STAT,
++			SUN8I_H3_THS_INTS_TDATA_IRQ_0   |
++			SUN8I_A83T_THS_INTS_TDATA_IRQ_1 |
++			SUN8I_A83T_THS_INTS_TDATA_IRQ_2);
++
++	regmap_write(info->regmap, SUN8I_H3_THS_FILTER,
++			SUN4I_GPADC_CTRL3_FILTER_EN |
++			SUN4I_GPADC_CTRL3_FILTER_TYPE(0x2));
++
++	regmap_write(info->regmap, SUN8I_H3_THS_INTC,
++			SUN8I_H3_THS_INTC_TDATA_IRQ_EN0 |
++			SUN8I_A83T_THS_INTC_TDATA_IRQ_EN1 |
++			SUN8I_A83T_THS_INTC_TDATA_IRQ_EN2 |
++			SUN8I_H3_THS_TEMP_PERIOD(0x257));
++
++	regmap_read(info->regmap, SUN8I_H3_THS_CTRL2, &value);
++
++	regmap_write(info->regmap, SUN8I_H3_THS_CTRL2,
++			SUN8I_H3_THS_TEMP_SENSE_EN0   |
++			SUN8I_A83T_THS_TEMP_SENSE_EN1 |
++			SUN8I_A83T_THS_TEMP_SENSE_EN2 |
++			value);
++
+ 	return 0;
+ }
+ 
+ static int sun4i_gpadc_get_temp(void *data, int *temp)
+ {
+-	struct sun4i_gpadc_iio *info = data;
++	struct sun4i_sensor_tzd *tzd = data;
++	struct sun4i_gpadc_iio *info = tzd->info;
+ 	int val, scale, offset;
+ 
+-	if (sun4i_gpadc_temp_read(info->indio_dev, &val))
++	if (sun4i_gpadc_temp_read(info->indio_dev, &val, tzd->sensor_id))
+ 		return -ETIMEDOUT;
+ 
+ 	sun4i_gpadc_temp_scale(info->indio_dev, &scale);
+@@ -440,60 +622,31 @@
+ 	.runtime_resume = &sun4i_gpadc_runtime_resume,
+ };
+ 
+-static int sun4i_irq_init(struct platform_device *pdev, const char *name,
+-			  irq_handler_t handler, const char *devname,
+-			  unsigned int *irq, atomic_t *atomic)
+-{
+-	int ret;
+-	struct sun4i_gpadc_dev *mfd_dev = dev_get_drvdata(pdev->dev.parent);
+-	struct sun4i_gpadc_iio *info = iio_priv(dev_get_drvdata(&pdev->dev));
+-
+-	/*
+-	 * Once the interrupt is activated, the IP continuously performs
+-	 * conversions thus throws interrupts. The interrupt is activated right
+-	 * after being requested but we want to control when these interrupts
+-	 * occur thus we disable it right after being requested. However, an
+-	 * interrupt might occur between these two instructions and we have to
+-	 * make sure that does not happen, by using atomic flags. We set the
+-	 * flag before requesting the interrupt and unset it right after
+-	 * disabling the interrupt. When an interrupt occurs between these two
+-	 * instructions, reading the atomic flag will tell us to ignore the
+-	 * interrupt.
+-	 */
+-	atomic_set(atomic, 1);
+-
+-	ret = platform_get_irq_byname(pdev, name);
+-	if (ret < 0) {
+-		dev_err(&pdev->dev, "no %s interrupt registered\n", name);
+-		return ret;
+-	}
+-
+-	ret = regmap_irq_get_virq(mfd_dev->regmap_irqc, ret);
+-	if (ret < 0) {
+-		dev_err(&pdev->dev, "failed to get virq for irq %s\n", name);
+-		return ret;
+-	}
+-
+-	*irq = ret;
+-	ret = devm_request_any_context_irq(&pdev->dev, *irq, handler, 0,
+-					   devname, info);
+-	if (ret < 0) {
+-		dev_err(&pdev->dev, "could not request %s interrupt: %d\n",
+-			name, ret);
+-		return ret;
+-	}
+-
+-	disable_irq(*irq);
+-	atomic_set(atomic, 0);
+-
+-	return 0;
+-}
+-
+ static const struct of_device_id sun4i_gpadc_of_id[] = {
+ 	{
+ 		.compatible = "allwinner,sun8i-a33-ths",
+ 		.data = &sun8i_a33_gpadc_data,
+ 	},
++	{
++		.compatible = "allwinner,sun4i-a10-gpadc",
++		.data = &sun4i_gpadc_data
++	},
++	{
++		.compatible = "allwinner,sun5i-a13-gpadc",
++		.data = &sun5i_gpadc_data
++	},
++	{
++		.compatible = "allwinner,sun6i-a31-gpadc",
++		.data = &sun6i_gpadc_data
++	},
++	{
++		.compatible = "allwinner,sun8i-h3-ths",
++		.data = &sun8i_h3_ths_data,
++	},
++	{
++		.compatible = "allwinner,sun8i-a83t-ths",
++		.data = &sun8i_a83t_ths_data,
++	},
+ 	{ /* sentinel */ }
+ };
+ 
+@@ -504,116 +657,127 @@
+ 	struct resource *mem;
+ 	void __iomem *base;
+ 	int ret;
++	struct nvmem_cell *cell;
++	ssize_t cell_size;
++	u32 *cell_data;
+ 
+ 	info->data = of_device_get_match_data(&pdev->dev);
+ 	if (!info->data)
+ 		return -ENODEV;
+ 
+-	info->no_irq = true;
+-	indio_dev->num_channels = ARRAY_SIZE(sun8i_a33_gpadc_channels);
+-	indio_dev->channels = sun8i_a33_gpadc_channels;
+-
+ 	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+ 	base = devm_ioremap_resource(&pdev->dev, mem);
+ 	if (IS_ERR(base))
+ 		return PTR_ERR(base);
+ 
+-	info->regmap = devm_regmap_init_mmio(&pdev->dev, base,
+-					     &sun4i_gpadc_regmap_config);
++	if (info->data->supports_nvmem) {
++
++		cell = nvmem_cell_get(&pdev->dev, "calibration");
++		if (IS_ERR(cell)) {
++			if (PTR_ERR(cell) == -EPROBE_DEFER)
++				return PTR_ERR(cell);
++		} else {
++			cell_data = (u32 *)nvmem_cell_read(cell, &cell_size);
++			if (cell_size != 8)
++				dev_err(&pdev->dev,
++					"Calibration data has wrong size\n");
++			else {
++				info->calibration_data[0] = cell_data[0];
++				info->calibration_data[1] = cell_data[1];
++			}
++		}
++	}
++
++	if (info->data->has_bus_clk)
++		info->regmap = devm_regmap_init_mmio_clk(&pdev->dev, "bus",
++				base, &sun4i_gpadc_regmap_config);
++	else
++		info->regmap = devm_regmap_init_mmio(&pdev->dev, base,
++				&sun4i_gpadc_regmap_config);
++
+ 	if (IS_ERR(info->regmap)) {
+ 		ret = PTR_ERR(info->regmap);
+ 		dev_err(&pdev->dev, "failed to init regmap: %d\n", ret);
+ 		return ret;
+ 	}
+ 
+-	if (IS_ENABLED(CONFIG_THERMAL_OF))
+-		info->sensor_device = &pdev->dev;
+-
+-	return 0;
+-}
+-
+-static int sun4i_gpadc_probe_mfd(struct platform_device *pdev,
+-				 struct iio_dev *indio_dev)
+-{
+-	struct sun4i_gpadc_iio *info = iio_priv(indio_dev);
+-	struct sun4i_gpadc_dev *sun4i_gpadc_dev =
+-		dev_get_drvdata(pdev->dev.parent);
+-	int ret;
++	if (info->data->support_irq) {
+ 
+-	info->no_irq = false;
+-	info->regmap = sun4i_gpadc_dev->regmap;
++		/* ths interrupt */
++		info->irq = platform_get_irq(pdev, 0);
+ 
+-	indio_dev->num_channels = ARRAY_SIZE(sun4i_gpadc_channels);
+-	indio_dev->channels = sun4i_gpadc_channels;
++		ret = devm_request_threaded_irq(&pdev->dev, info->irq,
++				NULL, info->data->ths_irq_thread,
++				IRQF_ONESHOT, dev_name(&pdev->dev), info);
+ 
+-	info->data = (struct gpadc_data *)platform_get_device_id(pdev)->driver_data;
++		if (info->data->adc_channel)
++			disable_irq(info->irq);
+ 
+-	/*
+-	 * Since the controller needs to be in touchscreen mode for its thermal
+-	 * sensor to operate properly, and that switching between the two modes
+-	 * needs a delay, always registering in the thermal framework will
+-	 * significantly slow down the conversion rate of the ADCs.
+-	 *
+-	 * Therefore, instead of depending on THERMAL_OF in Kconfig, we only
+-	 * register the sensor if that option is enabled, eventually leaving
+-	 * that choice to the user.
+-	 */
+-
+-	if (IS_ENABLED(CONFIG_THERMAL_OF)) {
+-		/*
+-		 * This driver is a child of an MFD which has a node in the DT
+-		 * but not its children, because of DT backward compatibility
+-		 * for A10, A13 and A31 SoCs. Therefore, the resulting devices
+-		 * of this driver do not have an of_node variable.
+-		 * However, its parent (the MFD driver) has an of_node variable
+-		 * and since devm_thermal_zone_of_sensor_register uses its first
+-		 * argument to match the phandle defined in the node of the
+-		 * thermal driver with the of_node of the device passed as first
+-		 * argument and the third argument to call ops from
+-		 * thermal_zone_of_device_ops, the solution is to use the parent
+-		 * device as first argument to match the phandle with its
+-		 * of_node, and the device from this driver as third argument to
+-		 * return the temperature.
+-		 */
+-		info->sensor_device = pdev->dev.parent;
+-	} else {
+-		indio_dev->num_channels =
+-			ARRAY_SIZE(sun4i_gpadc_channels_no_temp);
+-		indio_dev->channels = sun4i_gpadc_channels_no_temp;
++		if (ret) {
++			dev_err(&pdev->dev, "failed to add ths irq: %d\n", ret);
++			return ret;
++		}
+ 	}
+ 
+-	if (IS_ENABLED(CONFIG_THERMAL_OF)) {
+-		ret = sun4i_irq_init(pdev, "TEMP_DATA_PENDING",
+-				     sun4i_gpadc_temp_data_irq_handler,
+-				     "temp_data", &info->temp_data_irq,
+-				     &info->ignore_temp_data_irq);
+-		if (ret < 0)
++	if (info->data->has_bus_rst) {
++		info->reset = devm_reset_control_get(&pdev->dev, NULL);
++		if (IS_ERR(info->reset)) {
++			ret = PTR_ERR(info->reset);
++			return ret;
++		}
++
++		ret = reset_control_deassert(info->reset);
++		if (ret)
+ 			return ret;
+ 	}
+ 
+-	ret = sun4i_irq_init(pdev, "FIFO_DATA_PENDING",
+-			     sun4i_gpadc_fifo_data_irq_handler, "fifo_data",
+-			     &info->fifo_data_irq, &info->ignore_fifo_data_irq);
+-	if (ret < 0)
+-		return ret;
++	if (info->data->has_bus_clk) {
++		info->bus_clk = devm_clk_get(&pdev->dev, "bus");
++		if (IS_ERR(info->bus_clk)) {
++			ret = PTR_ERR(info->bus_clk);
++			goto assert_reset;
++		}
+ 
+-	if (IS_ENABLED(CONFIG_THERMAL_OF)) {
+-		ret = iio_map_array_register(indio_dev, sun4i_gpadc_hwmon_maps);
+-		if (ret < 0) {
+-			dev_err(&pdev->dev,
+-				"failed to register iio map array\n");
+-			return ret;
++		ret = clk_prepare_enable(info->bus_clk);
++		if (ret)
++			goto assert_reset;
++	}
++
++	if (info->data->has_mod_clk) {
++		info->mod_clk = devm_clk_get(&pdev->dev, "mod");
++		if (IS_ERR(info->mod_clk)) {
++			ret = PTR_ERR(info->mod_clk);
++			goto disable_bus_clk;
+ 		}
++
++		/* Running at 4MHz */
++		ret = clk_set_rate(info->mod_clk, 4000000);
++		if (ret)
++			goto disable_bus_clk;
++
++		ret = clk_prepare_enable(info->mod_clk);
++		if (ret)
++			goto disable_bus_clk;
+ 	}
+ 
++	info->sensor_device = &pdev->dev;
++
+ 	return 0;
++
++disable_bus_clk:
++	clk_disable_unprepare(info->bus_clk);
++
++assert_reset:
++	reset_control_assert(info->reset);
++
++	return ret;
+ }
+ 
+ static int sun4i_gpadc_probe(struct platform_device *pdev)
+ {
+ 	struct sun4i_gpadc_iio *info;
+ 	struct iio_dev *indio_dev;
+-	int ret;
++	int ret, i;
+ 
+ 	indio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*info));
+ 	if (!indio_dev)
+@@ -631,10 +795,12 @@
+ 	indio_dev->info = &sun4i_gpadc_iio_info;
+ 	indio_dev->modes = INDIO_DIRECT_MODE;
+ 
+-	if (pdev->dev.of_node)
+-		ret = sun4i_gpadc_probe_dt(pdev, indio_dev);
+-	else
+-		ret = sun4i_gpadc_probe_mfd(pdev, indio_dev);
++	if (&info->data->adc_channel) {
++		indio_dev->num_channels = ARRAY_SIZE(sun4i_gpadc_channels);
++		indio_dev->channels = sun4i_gpadc_channels;
++	}
++
++	ret = sun4i_gpadc_probe_dt(pdev, indio_dev);
+ 
+ 	if (ret)
+ 		return ret;
+@@ -645,19 +811,23 @@
+ 	pm_runtime_set_suspended(&pdev->dev);
+ 	pm_runtime_enable(&pdev->dev);
+ 
+-	if (IS_ENABLED(CONFIG_THERMAL_OF)) {
+-		info->tzd = thermal_zone_of_sensor_register(info->sensor_device,
+-							    0, info,
+-							    &sun4i_ts_tz_ops);
++	for (i = 0; i < info->data->sensor_count; i++) {
++		info->tzds[i].info = info;
++		info->tzds[i].sensor_id = i;
++
++		info->tzds[i].tzd = thermal_zone_of_sensor_register(
++				info->sensor_device,
++				i, &info->tzds[i], &sun4i_ts_tz_ops);
+ 		/*
+ 		 * Do not fail driver probing when failing to register in
+ 		 * thermal because no thermal DT node is found.
+ 		 */
+-		if (IS_ERR(info->tzd) && PTR_ERR(info->tzd) != -ENODEV) {
++		if (IS_ERR(info->tzds[i].tzd) && \
++				PTR_ERR(info->tzds[i].tzd) != -ENODEV) {
+ 			dev_err(&pdev->dev,
+ 				"could not register thermal sensor: %ld\n",
+-				PTR_ERR(info->tzd));
+-			return PTR_ERR(info->tzd);
++				PTR_ERR(info->tzds[i].tzd));
++			return PTR_ERR(info->tzds[i].tzd);
+ 		}
+ 	}
+ 
+@@ -670,7 +840,7 @@
+ 	return 0;
+ 
+ err_map:
+-	if (!info->no_irq && IS_ENABLED(CONFIG_THERMAL_OF))
++	if (!info->data->support_irq)
+ 		iio_map_array_unregister(indio_dev);
+ 
+ 	pm_runtime_put(&pdev->dev);
+@@ -683,36 +853,33 @@
+ {
+ 	struct iio_dev *indio_dev = platform_get_drvdata(pdev);
+ 	struct sun4i_gpadc_iio *info = iio_priv(indio_dev);
++	int i;
+ 
+ 	pm_runtime_put(&pdev->dev);
+ 	pm_runtime_disable(&pdev->dev);
+ 
+-	if (!IS_ENABLED(CONFIG_THERMAL_OF))
+-		return 0;
+-
+-	thermal_zone_of_sensor_unregister(info->sensor_device, info->tzd);
++	for (i = 0; i < info->data->sensor_count; i++)
++		thermal_zone_of_sensor_unregister(info->sensor_device,
++						  info->tzds[i].tzd);
+ 
+-	if (!info->no_irq)
++	if (!info->data->support_irq)
+ 		iio_map_array_unregister(indio_dev);
+ 
++	clk_disable_unprepare(info->mod_clk);
++
++	clk_disable_unprepare(info->bus_clk);
++
++	reset_control_assert(info->reset);
++
+ 	return 0;
+ }
+ 
+-static const struct platform_device_id sun4i_gpadc_id[] = {
+-	{ "sun4i-a10-gpadc-iio", (kernel_ulong_t)&sun4i_gpadc_data },
+-	{ "sun5i-a13-gpadc-iio", (kernel_ulong_t)&sun5i_gpadc_data },
+-	{ "sun6i-a31-gpadc-iio", (kernel_ulong_t)&sun6i_gpadc_data },
+-	{ /* sentinel */ },
+-};
+-MODULE_DEVICE_TABLE(platform, sun4i_gpadc_id);
+-
+ static struct platform_driver sun4i_gpadc_driver = {
+ 	.driver = {
+ 		.name = "sun4i-gpadc-iio",
+ 		.of_match_table = sun4i_gpadc_of_id,
+ 		.pm = &sun4i_gpadc_pm_ops,
+ 	},
+-	.id_table = sun4i_gpadc_id,
+ 	.probe = sun4i_gpadc_probe,
+ 	.remove = sun4i_gpadc_remove,
+ };
+diff -uNr --no-dereference linux-4.18/drivers/mfd/Kconfig linux-4.18-sunxi-ths-v3/drivers/mfd/Kconfig
+--- linux-4.18/drivers/mfd/Kconfig	2018-08-12 20:41:04.000000000 +0000
++++ linux-4.18-sunxi-ths-v3/drivers/mfd/Kconfig	2018-08-30 15:18:10.000000000 +0000
+@@ -40,23 +40,6 @@
+ 	  linear regulators, along with a complete ActivePath battery
+ 	  charger.
+ 
+-config MFD_SUN4I_GPADC
+-	tristate "Allwinner sunxi platforms' GPADC MFD driver"
+-	select MFD_CORE
+-	select REGMAP_MMIO
+-	select REGMAP_IRQ
+-	depends on ARCH_SUNXI || COMPILE_TEST
+-	depends on !TOUCHSCREEN_SUN4I
+-	help
+-	  Select this to get support for Allwinner SoCs (A10, A13 and A31) ADC.
+-	  This driver will only map the hardware interrupt and registers, you
+-	  have to select individual drivers based on this MFD to be able to use
+-	  the ADC or the thermal sensor. This will try to probe the ADC driver
+-	  sun4i-gpadc-iio and the hwmon driver iio_hwmon.
+-
+-	  To compile this driver as a module, choose M here: the module will be
+-	  called sun4i-gpadc.
+-
+ config MFD_AS3711
+ 	bool "AMS AS3711"
+ 	select MFD_CORE
+diff -uNr --no-dereference linux-4.18/drivers/mfd/Makefile linux-4.18-sunxi-ths-v3/drivers/mfd/Makefile
+--- linux-4.18/drivers/mfd/Makefile	2018-08-12 20:41:04.000000000 +0000
++++ linux-4.18-sunxi-ths-v3/drivers/mfd/Makefile	2018-08-30 15:18:10.000000000 +0000
+@@ -220,7 +220,6 @@
+ obj-$(CONFIG_MFD_MT6397)	+= mt6397-core.o
+ 
+ obj-$(CONFIG_MFD_ALTERA_A10SR)	+= altera-a10sr.o
+-obj-$(CONFIG_MFD_SUN4I_GPADC)	+= sun4i-gpadc.o
+ 
+ obj-$(CONFIG_MFD_STM32_LPTIMER)	+= stm32-lptimer.o
+ obj-$(CONFIG_MFD_STM32_TIMERS) 	+= stm32-timers.o
+diff -uNr --no-dereference linux-4.18/drivers/mfd/sun4i-gpadc.c linux-4.18-sunxi-ths-v3/drivers/mfd/sun4i-gpadc.c
+--- linux-4.18/drivers/mfd/sun4i-gpadc.c	2018-08-12 20:41:04.000000000 +0000
++++ linux-4.18-sunxi-ths-v3/drivers/mfd/sun4i-gpadc.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,181 +0,0 @@
+-/* ADC MFD core driver for sunxi platforms
+- *
+- * Copyright (c) 2016 Quentin Schulz <quentin.schulz@free-electrons.com>
+- *
+- * This program is free software; you can redistribute it and/or modify it
+- * under the terms of the GNU General Public License version 2 as published by
+- * the Free Software Foundation.
+- */
+-
+-#include <linux/interrupt.h>
+-#include <linux/kernel.h>
+-#include <linux/mfd/core.h>
+-#include <linux/module.h>
+-#include <linux/of_device.h>
+-#include <linux/of_irq.h>
+-#include <linux/regmap.h>
+-
+-#include <linux/mfd/sun4i-gpadc.h>
+-
+-#define ARCH_SUN4I_A10 0
+-#define ARCH_SUN5I_A13 1
+-#define ARCH_SUN6I_A31 2
+-
+-static struct resource adc_resources[] = {
+-	DEFINE_RES_IRQ_NAMED(SUN4I_GPADC_IRQ_FIFO_DATA, "FIFO_DATA_PENDING"),
+-	DEFINE_RES_IRQ_NAMED(SUN4I_GPADC_IRQ_TEMP_DATA, "TEMP_DATA_PENDING"),
+-};
+-
+-static const struct regmap_irq sun4i_gpadc_regmap_irq[] = {
+-	REGMAP_IRQ_REG(SUN4I_GPADC_IRQ_FIFO_DATA, 0,
+-		       SUN4I_GPADC_INT_FIFOC_TP_DATA_IRQ_EN),
+-	REGMAP_IRQ_REG(SUN4I_GPADC_IRQ_TEMP_DATA, 0,
+-		       SUN4I_GPADC_INT_FIFOC_TEMP_IRQ_EN),
+-};
+-
+-static const struct regmap_irq_chip sun4i_gpadc_regmap_irq_chip = {
+-	.name = "sun4i_gpadc_irq_chip",
+-	.status_base = SUN4I_GPADC_INT_FIFOS,
+-	.ack_base = SUN4I_GPADC_INT_FIFOS,
+-	.mask_base = SUN4I_GPADC_INT_FIFOC,
+-	.init_ack_masked = true,
+-	.mask_invert = true,
+-	.irqs = sun4i_gpadc_regmap_irq,
+-	.num_irqs = ARRAY_SIZE(sun4i_gpadc_regmap_irq),
+-	.num_regs = 1,
+-};
+-
+-static struct mfd_cell sun4i_gpadc_cells[] = {
+-	{
+-		.name	= "sun4i-a10-gpadc-iio",
+-		.resources = adc_resources,
+-		.num_resources = ARRAY_SIZE(adc_resources),
+-	},
+-	{ .name = "iio_hwmon" }
+-};
+-
+-static struct mfd_cell sun5i_gpadc_cells[] = {
+-	{
+-		.name	= "sun5i-a13-gpadc-iio",
+-		.resources = adc_resources,
+-		.num_resources = ARRAY_SIZE(adc_resources),
+-	},
+-	{ .name = "iio_hwmon" },
+-};
+-
+-static struct mfd_cell sun6i_gpadc_cells[] = {
+-	{
+-		.name	= "sun6i-a31-gpadc-iio",
+-		.resources = adc_resources,
+-		.num_resources = ARRAY_SIZE(adc_resources),
+-	},
+-	{ .name = "iio_hwmon" },
+-};
+-
+-static const struct regmap_config sun4i_gpadc_regmap_config = {
+-	.reg_bits = 32,
+-	.val_bits = 32,
+-	.reg_stride = 4,
+-	.fast_io = true,
+-};
+-
+-static const struct of_device_id sun4i_gpadc_of_match[] = {
+-	{
+-		.compatible = "allwinner,sun4i-a10-ts",
+-		.data = (void *)ARCH_SUN4I_A10,
+-	}, {
+-		.compatible = "allwinner,sun5i-a13-ts",
+-		.data = (void *)ARCH_SUN5I_A13,
+-	}, {
+-		.compatible = "allwinner,sun6i-a31-ts",
+-		.data = (void *)ARCH_SUN6I_A31,
+-	}, { /* sentinel */ }
+-};
+-
+-MODULE_DEVICE_TABLE(of, sun4i_gpadc_of_match);
+-
+-static int sun4i_gpadc_probe(struct platform_device *pdev)
+-{
+-	struct sun4i_gpadc_dev *dev;
+-	struct resource *mem;
+-	const struct of_device_id *of_id;
+-	const struct mfd_cell *cells;
+-	unsigned int irq, size;
+-	int ret;
+-
+-	of_id = of_match_node(sun4i_gpadc_of_match, pdev->dev.of_node);
+-	if (!of_id)
+-		return -EINVAL;
+-
+-	switch ((long)of_id->data) {
+-	case ARCH_SUN4I_A10:
+-		cells = sun4i_gpadc_cells;
+-		size = ARRAY_SIZE(sun4i_gpadc_cells);
+-		break;
+-	case ARCH_SUN5I_A13:
+-		cells = sun5i_gpadc_cells;
+-		size = ARRAY_SIZE(sun5i_gpadc_cells);
+-		break;
+-	case ARCH_SUN6I_A31:
+-		cells = sun6i_gpadc_cells;
+-		size = ARRAY_SIZE(sun6i_gpadc_cells);
+-		break;
+-	default:
+-		return -EINVAL;
+-	}
+-
+-	dev = devm_kzalloc(&pdev->dev, sizeof(*dev), GFP_KERNEL);
+-	if (!dev)
+-		return -ENOMEM;
+-
+-	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+-	dev->base = devm_ioremap_resource(&pdev->dev, mem);
+-	if (IS_ERR(dev->base))
+-		return PTR_ERR(dev->base);
+-
+-	dev->dev = &pdev->dev;
+-	dev_set_drvdata(dev->dev, dev);
+-
+-	dev->regmap = devm_regmap_init_mmio(dev->dev, dev->base,
+-					    &sun4i_gpadc_regmap_config);
+-	if (IS_ERR(dev->regmap)) {
+-		ret = PTR_ERR(dev->regmap);
+-		dev_err(&pdev->dev, "failed to init regmap: %d\n", ret);
+-		return ret;
+-	}
+-
+-	/* Disable all interrupts */
+-	regmap_write(dev->regmap, SUN4I_GPADC_INT_FIFOC, 0);
+-
+-	irq = platform_get_irq(pdev, 0);
+-	ret = devm_regmap_add_irq_chip(&pdev->dev, dev->regmap, irq,
+-				       IRQF_ONESHOT, 0,
+-				       &sun4i_gpadc_regmap_irq_chip,
+-				       &dev->regmap_irqc);
+-	if (ret) {
+-		dev_err(&pdev->dev, "failed to add irq chip: %d\n", ret);
+-		return ret;
+-	}
+-
+-	ret = devm_mfd_add_devices(dev->dev, 0, cells, size, NULL, 0, NULL);
+-	if (ret) {
+-		dev_err(&pdev->dev, "failed to add MFD devices: %d\n", ret);
+-		return ret;
+-	}
+-
+-	return 0;
+-}
+-
+-static struct platform_driver sun4i_gpadc_driver = {
+-	.driver = {
+-		.name = "sun4i-gpadc",
+-		.of_match_table = of_match_ptr(sun4i_gpadc_of_match),
+-	},
+-	.probe = sun4i_gpadc_probe,
+-};
+-
+-module_platform_driver(sun4i_gpadc_driver);
+-
+-MODULE_DESCRIPTION("Allwinner sunxi platforms' GPADC MFD core driver");
+-MODULE_AUTHOR("Quentin Schulz <quentin.schulz@free-electrons.com>");
+-MODULE_LICENSE("GPL v2");
+diff -uNr --no-dereference linux-4.18/include/linux/iio/adc/sun4i-gpadc.h linux-4.18-sunxi-ths-v3/include/linux/iio/adc/sun4i-gpadc.h
+--- linux-4.18/include/linux/iio/adc/sun4i-gpadc.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-4.18-sunxi-ths-v3/include/linux/iio/adc/sun4i-gpadc.h	2018-08-30 15:18:10.000000000 +0000
+@@ -0,0 +1,129 @@
++/* Header of ADC MFD core driver for sunxi platforms
++ *
++ * Copyright (c) 2016 Quentin Schulz <quentin.schulz@free-electrons.com>
++ *
++ * This program is free software; you can redistribute it and/or modify it under
++ * the terms of the GNU General Public License version 2 as published by the
++ * Free Software Foundation.
++ */
++
++#ifndef __SUN4I_GPADC__H__
++#define __SUN4I_GPADC__H__
++
++#define SUN4I_GPADC_CTRL0				0x00
++
++#define SUN4I_GPADC_CTRL0_ADC_FIRST_DLY(x)		((GENMASK(7, 0) & (x)) << 24)
++#define SUN4I_GPADC_CTRL0_ADC_FIRST_DLY_MODE		BIT(23)
++#define SUN4I_GPADC_CTRL0_ADC_CLK_SELECT		BIT(22)
++#define SUN4I_GPADC_CTRL0_ADC_CLK_DIVIDER(x)		((GENMASK(1, 0) & (x)) << 20)
++#define SUN4I_GPADC_CTRL0_FS_DIV(x)			((GENMASK(3, 0) & (x)) << 16)
++#define SUN4I_GPADC_CTRL0_T_ACQ(x)			(GENMASK(15, 0) & (x))
++
++#define SUN4I_GPADC_CTRL1				0x04
++
++#define SUN4I_GPADC_CTRL1_STYLUS_UP_DEBOUNCE(x)		((GENMASK(7, 0) & (x)) << 12)
++#define SUN4I_GPADC_CTRL1_STYLUS_UP_DEBOUNCE_EN		BIT(9)
++#define SUN4I_GPADC_CTRL1_TOUCH_PAN_CALI_EN		BIT(6)
++#define SUN4I_GPADC_CTRL1_TP_DUAL_EN			BIT(5)
++#define SUN4I_GPADC_CTRL1_TP_MODE_EN			BIT(4)
++#define SUN4I_GPADC_CTRL1_TP_ADC_SELECT			BIT(3)
++#define SUN4I_GPADC_CTRL1_ADC_CHAN_SELECT(x)		(GENMASK(2, 0) & (x))
++#define SUN4I_GPADC_CTRL1_ADC_CHAN_MASK			GENMASK(2, 0)
++
++/* TP_CTRL1 bits for sun6i SOCs */
++#define SUN6I_GPADC_CTRL1_TOUCH_PAN_CALI_EN		BIT(7)
++#define SUN6I_GPADC_CTRL1_TP_DUAL_EN			BIT(6)
++#define SUN6I_GPADC_CTRL1_TP_MODE_EN			BIT(5)
++#define SUN6I_GPADC_CTRL1_TP_ADC_SELECT			BIT(4)
++#define SUN6I_GPADC_CTRL1_ADC_CHAN_SELECT(x)		(GENMASK(3, 0) & BIT(x))
++#define SUN6I_GPADC_CTRL1_ADC_CHAN_MASK			GENMASK(3, 0)
++
++/* TP_CTRL1 bits for A33 */
++#define SUN8I_A33_GPADC_CTRL1_CHOP_TEMP_EN		BIT(8)
++#define SUN8I_A33_GPADC_CTRL1_GPADC_CALI_EN		BIT(7)
++
++#define SUN4I_GPADC_CTRL2				0x08
++
++#define SUN4I_GPADC_CTRL2_TP_SENSITIVE_ADJUST(x)	((GENMASK(3, 0) & (x)) << 28)
++#define SUN4I_GPADC_CTRL2_TP_MODE_SELECT(x)		((GENMASK(1, 0) & (x)) << 26)
++#define SUN4I_GPADC_CTRL2_PRE_MEA_EN			BIT(24)
++#define SUN4I_GPADC_CTRL2_PRE_MEA_THRE_CNT(x)		(GENMASK(23, 0) & (x))
++
++#define SUN4I_GPADC_CTRL3				0x0c
++
++#define SUN4I_GPADC_CTRL3_FILTER_EN			BIT(2)
++#define SUN4I_GPADC_CTRL3_FILTER_TYPE(x)		(GENMASK(1, 0) & (x))
++
++#define SUN4I_GPADC_TPR					0x18
++
++#define SUN4I_GPADC_TPR_TEMP_ENABLE			BIT(16)
++#define SUN4I_GPADC_TPR_TEMP_PERIOD(x)			(GENMASK(15, 0) & (x))
++
++#define SUN4I_GPADC_INT_FIFOC				0x10
++
++#define SUN4I_GPADC_INT_FIFOC_TEMP_IRQ_EN		BIT(18)
++#define SUN4I_GPADC_INT_FIFOC_TP_OVERRUN_IRQ_EN		BIT(17)
++#define SUN4I_GPADC_INT_FIFOC_TP_DATA_IRQ_EN		BIT(16)
++#define SUN4I_GPADC_INT_FIFOC_TP_DATA_XY_CHANGE		BIT(13)
++#define SUN4I_GPADC_INT_FIFOC_TP_FIFO_TRIG_LEVEL(x)	((GENMASK(4, 0) & (x)) << 8)
++#define SUN4I_GPADC_INT_FIFOC_TP_DATA_DRQ_EN		BIT(7)
++#define SUN4I_GPADC_INT_FIFOC_TP_FIFO_FLUSH		BIT(4)
++#define SUN4I_GPADC_INT_FIFOC_TP_UP_IRQ_EN		BIT(1)
++#define SUN4I_GPADC_INT_FIFOC_TP_DOWN_IRQ_EN		BIT(0)
++
++#define SUN4I_GPADC_INT_FIFOS				0x14
++
++#define SUN4I_GPADC_INT_FIFOS_TEMP_DATA_PENDING		BIT(18)
++#define SUN4I_GPADC_INT_FIFOS_FIFO_OVERRUN_PENDING	BIT(17)
++#define SUN4I_GPADC_INT_FIFOS_FIFO_DATA_PENDING		BIT(16)
++#define SUN4I_GPADC_INT_FIFOS_TP_IDLE_FLG		BIT(2)
++#define SUN4I_GPADC_INT_FIFOS_TP_UP_PENDING		BIT(1)
++#define SUN4I_GPADC_INT_FIFOS_TP_DOWN_PENDING		BIT(0)
++
++#define SUN4I_GPADC_CDAT				0x1c
++#define SUN4I_GPADC_TEMP_DATA				0x20
++#define SUN4I_GPADC_DATA				0x24
++
++#define SUN4I_GPADC_IRQ_FIFO_DATA			0
++#define SUN4I_GPADC_IRQ_TEMP_DATA			1
++
++/* 10s delay before suspending the IP */
++#define SUN4I_GPADC_AUTOSUSPEND_DELAY			10000
++
++#define SUN4I_GPADC_ADC_CHANNEL(_channel, _name) {		\
++	.type = IIO_VOLTAGE,					\
++	.indexed = 1,						\
++	.channel = _channel,					\
++	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),		\
++	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),	\
++	.datasheet_name = _name,				\
++}
++
++/* SUNXI_THS COMMON REGISTERS + DEFINES */
++#define SUN8I_H3_THS_CTRL0				0x00
++
++#define SUN8I_H3_THS_CTRL2				0x40
++#define SUN8I_H3_THS_ACQ1(x)			(GENMASK(31, 16) & ((x) << 16))
++#define SUN8I_H3_THS_TEMP_SENSE_EN0			BIT(0)
++#define SUN8I_A83T_THS_TEMP_SENSE_EN1			BIT(1)
++#define SUN8I_A83T_THS_TEMP_SENSE_EN2			BIT(2)
++
++#define SUN8I_H3_THS_INTC				0x44
++#define SUN8I_H3_THS_TEMP_PERIOD(x)		(GENMASK(31, 12) & ((x) << 12))
++#define SUN8I_H3_THS_INTC_TDATA_IRQ_EN0			BIT(8)
++#define SUN8I_A83T_THS_INTC_TDATA_IRQ_EN1		BIT(9)
++#define SUN8I_A83T_THS_INTC_TDATA_IRQ_EN2		BIT(10)
++
++#define SUN8I_H3_THS_STAT				0x48
++#define SUN8I_H3_THS_INTS_TDATA_IRQ_0			BIT(8)
++#define SUN8I_A83T_THS_INTS_TDATA_IRQ_1			BIT(9)
++#define SUN8I_A83T_THS_INTS_TDATA_IRQ_2			BIT(10)
++
++#define SUN8I_H3_THS_FILTER				0x70
++#define SUNXI_THS_CDATA_0_1				0x74
++#define SUNXI_THS_CDATA_2_3				0x78
++#define SUN8I_H3_THS_TDATA0				0x80
++
++#define MAX_SENSOR_COUNT				4
++
++#endif
+diff -uNr --no-dereference linux-4.18/include/linux/mfd/sun4i-gpadc.h linux-4.18-sunxi-ths-v3/include/linux/mfd/sun4i-gpadc.h
+--- linux-4.18/include/linux/mfd/sun4i-gpadc.h	2018-08-12 20:41:04.000000000 +0000
++++ linux-4.18-sunxi-ths-v3/include/linux/mfd/sun4i-gpadc.h	1970-01-01 00:00:00.000000000 +0000
+@@ -1,100 +0,0 @@
+-/* Header of ADC MFD core driver for sunxi platforms
+- *
+- * Copyright (c) 2016 Quentin Schulz <quentin.schulz@free-electrons.com>
+- *
+- * This program is free software; you can redistribute it and/or modify it under
+- * the terms of the GNU General Public License version 2 as published by the
+- * Free Software Foundation.
+- */
+-
+-#ifndef __SUN4I_GPADC__H__
+-#define __SUN4I_GPADC__H__
+-
+-#define SUN4I_GPADC_CTRL0				0x00
+-
+-#define SUN4I_GPADC_CTRL0_ADC_FIRST_DLY(x)		((GENMASK(7, 0) & (x)) << 24)
+-#define SUN4I_GPADC_CTRL0_ADC_FIRST_DLY_MODE		BIT(23)
+-#define SUN4I_GPADC_CTRL0_ADC_CLK_SELECT		BIT(22)
+-#define SUN4I_GPADC_CTRL0_ADC_CLK_DIVIDER(x)		((GENMASK(1, 0) & (x)) << 20)
+-#define SUN4I_GPADC_CTRL0_FS_DIV(x)			((GENMASK(3, 0) & (x)) << 16)
+-#define SUN4I_GPADC_CTRL0_T_ACQ(x)			(GENMASK(15, 0) & (x))
+-
+-#define SUN4I_GPADC_CTRL1				0x04
+-
+-#define SUN4I_GPADC_CTRL1_STYLUS_UP_DEBOUNCE(x)		((GENMASK(7, 0) & (x)) << 12)
+-#define SUN4I_GPADC_CTRL1_STYLUS_UP_DEBOUNCE_EN		BIT(9)
+-#define SUN4I_GPADC_CTRL1_TOUCH_PAN_CALI_EN		BIT(6)
+-#define SUN4I_GPADC_CTRL1_TP_DUAL_EN			BIT(5)
+-#define SUN4I_GPADC_CTRL1_TP_MODE_EN			BIT(4)
+-#define SUN4I_GPADC_CTRL1_TP_ADC_SELECT			BIT(3)
+-#define SUN4I_GPADC_CTRL1_ADC_CHAN_SELECT(x)		(GENMASK(2, 0) & (x))
+-#define SUN4I_GPADC_CTRL1_ADC_CHAN_MASK			GENMASK(2, 0)
+-
+-/* TP_CTRL1 bits for sun6i SOCs */
+-#define SUN6I_GPADC_CTRL1_TOUCH_PAN_CALI_EN		BIT(7)
+-#define SUN6I_GPADC_CTRL1_TP_DUAL_EN			BIT(6)
+-#define SUN6I_GPADC_CTRL1_TP_MODE_EN			BIT(5)
+-#define SUN6I_GPADC_CTRL1_TP_ADC_SELECT			BIT(4)
+-#define SUN6I_GPADC_CTRL1_ADC_CHAN_SELECT(x)		(GENMASK(3, 0) & BIT(x))
+-#define SUN6I_GPADC_CTRL1_ADC_CHAN_MASK			GENMASK(3, 0)
+-
+-/* TP_CTRL1 bits for sun8i SoCs */
+-#define SUN8I_GPADC_CTRL1_CHOP_TEMP_EN			BIT(8)
+-#define SUN8I_GPADC_CTRL1_GPADC_CALI_EN			BIT(7)
+-
+-#define SUN4I_GPADC_CTRL2				0x08
+-
+-#define SUN4I_GPADC_CTRL2_TP_SENSITIVE_ADJUST(x)	((GENMASK(3, 0) & (x)) << 28)
+-#define SUN4I_GPADC_CTRL2_TP_MODE_SELECT(x)		((GENMASK(1, 0) & (x)) << 26)
+-#define SUN4I_GPADC_CTRL2_PRE_MEA_EN			BIT(24)
+-#define SUN4I_GPADC_CTRL2_PRE_MEA_THRE_CNT(x)		(GENMASK(23, 0) & (x))
+-
+-#define SUN4I_GPADC_CTRL3				0x0c
+-
+-#define SUN4I_GPADC_CTRL3_FILTER_EN			BIT(2)
+-#define SUN4I_GPADC_CTRL3_FILTER_TYPE(x)		(GENMASK(1, 0) & (x))
+-
+-#define SUN4I_GPADC_TPR					0x18
+-
+-#define SUN4I_GPADC_TPR_TEMP_ENABLE			BIT(16)
+-#define SUN4I_GPADC_TPR_TEMP_PERIOD(x)			(GENMASK(15, 0) & (x))
+-
+-#define SUN4I_GPADC_INT_FIFOC				0x10
+-
+-#define SUN4I_GPADC_INT_FIFOC_TEMP_IRQ_EN		BIT(18)
+-#define SUN4I_GPADC_INT_FIFOC_TP_OVERRUN_IRQ_EN		BIT(17)
+-#define SUN4I_GPADC_INT_FIFOC_TP_DATA_IRQ_EN		BIT(16)
+-#define SUN4I_GPADC_INT_FIFOC_TP_DATA_XY_CHANGE		BIT(13)
+-#define SUN4I_GPADC_INT_FIFOC_TP_FIFO_TRIG_LEVEL(x)	((GENMASK(4, 0) & (x)) << 8)
+-#define SUN4I_GPADC_INT_FIFOC_TP_DATA_DRQ_EN		BIT(7)
+-#define SUN4I_GPADC_INT_FIFOC_TP_FIFO_FLUSH		BIT(4)
+-#define SUN4I_GPADC_INT_FIFOC_TP_UP_IRQ_EN		BIT(1)
+-#define SUN4I_GPADC_INT_FIFOC_TP_DOWN_IRQ_EN		BIT(0)
+-
+-#define SUN4I_GPADC_INT_FIFOS				0x14
+-
+-#define SUN4I_GPADC_INT_FIFOS_TEMP_DATA_PENDING		BIT(18)
+-#define SUN4I_GPADC_INT_FIFOS_FIFO_OVERRUN_PENDING	BIT(17)
+-#define SUN4I_GPADC_INT_FIFOS_FIFO_DATA_PENDING		BIT(16)
+-#define SUN4I_GPADC_INT_FIFOS_TP_IDLE_FLG		BIT(2)
+-#define SUN4I_GPADC_INT_FIFOS_TP_UP_PENDING		BIT(1)
+-#define SUN4I_GPADC_INT_FIFOS_TP_DOWN_PENDING		BIT(0)
+-
+-#define SUN4I_GPADC_CDAT				0x1c
+-#define SUN4I_GPADC_TEMP_DATA				0x20
+-#define SUN4I_GPADC_DATA				0x24
+-
+-#define SUN4I_GPADC_IRQ_FIFO_DATA			0
+-#define SUN4I_GPADC_IRQ_TEMP_DATA			1
+-
+-/* 10s delay before suspending the IP */
+-#define SUN4I_GPADC_AUTOSUSPEND_DELAY			10000
+-
+-struct sun4i_gpadc_dev {
+-	struct device			*dev;
+-	struct regmap			*regmap;
+-	struct regmap_irq_chip_data	*regmap_irqc;
+-	void __iomem			*base;
+-};
+-
+-#endif

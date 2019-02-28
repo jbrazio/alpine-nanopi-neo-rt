@@ -1,0 +1,26 @@
+#!/sbin/openrc-run
+
+description="Sets the MAC address of the first ethernet interface."
+
+depend() {
+	before net
+	keyword -prefix -lxc
+}
+
+start() {
+	IFNAME=$(ip_choose_if)
+	MAC=$(echo $( awk '/Serial/ {print $3}' /proc/cpuinfo | sed 's/^0*//' )|md5sum|sed 's/^\(..\)\(..\)\(..\)\(..\)\(..\).*$/02:\1:\2:\3:\4:\5/')
+
+	ebegin "Setting ${IFNAME} MAC address"
+	ip link set dev ${IFNAME} address ${MAC}
+	eend $?
+}
+
+ip_choose_if() {
+	for x in /sys/class/net/eth*; do
+		if grep -iq up $x/operstate;then
+			[ -e "$x" ] && echo ${x##*/} && return
+		fi
+	done
+	[ -e "$x" ] && echo ${x##*/} && return
+}

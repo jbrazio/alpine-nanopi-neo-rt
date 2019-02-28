@@ -1,0 +1,9 @@
+output/
+build/
+tmp/
+
+*~
+*.swp
+*.sublime-workspace
+*.sublime-project
+
