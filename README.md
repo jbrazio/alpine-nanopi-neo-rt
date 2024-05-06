@@ -7,7 +7,7 @@ of [Alpine Linux][1] for the [FriendlyARM NanoPi NEO][2] board patched with the
 
 - U-Boot v2024.04
 - Kernel v5.4.84 (rt47)
-- Alpine 3.19
+- Alpine v3.19
 
 Use the provided docker files to build the sdcard image.
 
