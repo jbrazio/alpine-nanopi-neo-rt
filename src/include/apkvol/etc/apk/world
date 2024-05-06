@@ -1,5 +1,4 @@
 alpine-base
-build-base
-git
-libressl
+busybox-mdev-openrc
 openssh-server
+openssl

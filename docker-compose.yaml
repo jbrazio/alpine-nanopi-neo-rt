@@ -1,0 +1,16 @@
+services:
+  nanopi-neo:
+    privileged: true
+    restart: no
+
+    build:
+      context: .
+      network: host
+
+    volumes:
+      - ./src:/src:ro
+      - ./out:/out:rw
+      - build:/build:rw
+
+volumes:
+  build:

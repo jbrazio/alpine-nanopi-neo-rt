@@ -1,6 +1,8 @@
 #!/bin/bash
 
 set -e
+set -o pipefail
+
 source config.sh
 source functions.sh
 
@@ -27,21 +29,21 @@ if [ ! -d "${BUILD_PATH}/${TARGET}/apkvol" ]; then
   tar zxf "${BUILD_PATH}/${TARGET}/unpack/alpine.apkovl.tar.gz" -C "${BUILD_PATH}/${TARGET}/apkvol"
 fi;
 
-if [ -d "${BUILD_PATH}/../include/apkvol" ]; then
+if [ -d "${BASEPATH}/include/apkvol" ]; then
   einfo "Updating apkvol.."
-  cp -af "${BUILD_PATH}/../include/apkvol/." "${BUILD_PATH}/${TARGET}/apkvol"
+  cp -af "${BASEPATH}/include/apkvol/." "${BUILD_PATH}/${TARGET}/apkvol"
+  [ -h "$file" ] && rm "${BUILD_PATH}/${TARGET}/apkvol/etc/runlevels/boot/hwclock"
 fi;
-
 
 einfo "Extracting existing ramdisk.."
 if [ ! -d "${BUILD_PATH}/${TARGET}/ramdisk" ]; then
   mkdir -p "${BUILD_PATH}/${TARGET}/ramdisk"
-  zcat "${BUILD_PATH}/${TARGET}/unpack/boot/initramfs-vanilla" | cpio -i -D "${BUILD_PATH}/${TARGET}/ramdisk"
+  zcat "${BUILD_PATH}/${TARGET}/unpack/boot/initramfs-lts" | cpio -i -D "${BUILD_PATH}/${TARGET}/ramdisk"
 fi;
 
-if [ -d "${BUILD_PATH}/../include/ramdisk" ]; then
+if [ -d "${BASEPATH}/include/ramdisk" ]; then
   einfo "Updating ramdisk.."
-  cp -af "${BUILD_PATH}/../include/ramdisk/." "${BUILD_PATH}/${TARGET}/ramdisk"
+  cp -af "${BASEPATH}/include/ramdisk/." "${BUILD_PATH}/${TARGET}/ramdisk"
 fi;
 
 if [ -n "${DO_RAMDISK_SHELL}" ]; then
@@ -65,13 +67,13 @@ mkimage -n "initramfs-${TARGET_FAMILY}" -A ${TARGET_ARCH} -O linux -T ramdisk -C
 
 einfo "Building apkvol tarball.."
 cd "${BUILD_PATH}/${TARGET}/apkvol/"
-tar --owner=root --group=root -czf "${BASEPATH}/${OUTPUT_PATH}/alpine.apkovl.tar.gz" *
+tar --owner=root --group=root -czf "${OUTPUT_PATH}/alpine.apkovl.tar.gz" *
 cd "${BASEPATH}"
 
 einfo "Caching apk files.."
 cp -af "${BUILD_PATH}/${TARGET}/unpack/apks"                 "${OUTPUT_PATH}"
 #cp -af "${BUILD_PATH}/${TARGET}/unpack/alpine.apkovl.tar.gz" "${OUTPUT_PATH}"
 
-einfo "Cleanup.."
+einfo "Cleanup ramdisk.."
 [ -n "${DEBUG}" ] && tree "${BUILD_PATH}/${TARGET}/ramdisk"
 exit 0

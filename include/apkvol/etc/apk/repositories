@@ -1,8 +1,0 @@
-/media/mmcblk0p1/apks
-
-http://dl-cdn.alpinelinux.org/alpine/v3.9/main
-http://dl-cdn.alpinelinux.org/alpine/v3.9/community
-
-@edge http://dl-cdn.alpinelinux.org/alpine/edge/main
-@testing http://dl-cdn.alpinelinux.org/alpine/edge/testing
-@edgecommunity http://dl-cdn.alpinelinux.org/alpine/edge/community

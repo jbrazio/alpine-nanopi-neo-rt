@@ -1,9 +1,2 @@
-output/
-build/
-tmp/
-
-*~
-*.swp
-*.sublime-workspace
-*.sublime-project
-
+out/
+**/.ssh/authorized_keys

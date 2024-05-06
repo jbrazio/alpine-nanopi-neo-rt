@@ -1,33 +1,53 @@
 #!/bin/bash
 
 set -e
+set -o pipefail
+
 source config.sh
 source functions.sh
 
-IMAGE=${OUTPUT_PATH}/sdcard-alpine-${TARGET_FAMILY}-${TARGET_BOARD}-${SDCARD_SIZE}.img
+trap 'handle_exit' EXIT
+
+handle_exit() {
+  einfo "Cleaning sdcard.."
+  umount "${WORK_PATH}" || true
+  kpartx -dvs /dev/${LOOP} || true
+  losetup -d /dev/${LOOP} || true
+}
+
+IMAGE=${OUTPUT_PATH}/sdcard-alpine-${TARGET_FAMILY}-${TARGET_BOARD}-${SDCARD_SIZE}M.img
 
 [ -d "${BUILD_PATH}" ] || mkdir "${BUILD_PATH}"
 
-einfo "Creating ${SDCARD_SIZE} base image file.."
-dd if=/dev/zero of="${IMAGE}" bs=${SDCARD_SIZE} count=1
+einfo "Creating ${SDCARD_SIZE}Mb base image file.."
+dd if=/dev/zero of="${IMAGE}" bs=${SDCARD_SIZE}M count=1
 
 einfo "Burning the SPL loader and u-boot into the image file.."
 dd conv=notrunc if="${OUTPUT_PATH}/u-boot-${TARGET_FAMILY}-with-spl.bin" of="${IMAGE}" bs=1024 seek=8
 
 einfo "Writting the partition table.."
+
+SIZE_SECTORS=$(( 128 * 1024 * 1024 / 512 ))
+END_LBA=$(( SIZE_SECTORS - START_LBA ))
+
 sfdisk "${IMAGE}" <<EOF
 unit: sectors
-p1 : start=2048, Id=0c
+p1 : start=${START_LBA}, size=${END_LBA}, Id=0c
 EOF
 
 einfo "Map image partitions.."
-LOOP=$( sudo kpartx -avs "${IMAGE}" | grep -Po 'loop[[:digit:]]+' | head -1 )
+LOOP=$( kpartx -avs "${IMAGE}" | grep -Po 'loop[[:digit:]]+' | head -1 )
+
+if ! [ -b "/dev/${LOOP}" ]; then
+  kpartx -dvs "${IMAGE}"
+  die "Unable to get loop device (${LOOP})"
+fi
 
 einfo "Creating FAT32 filesystem.."
-sudo mkdosfs -F 32 -I /dev/mapper/${LOOP}p1
+mkdosfs -F 32 -I /dev/mapper/${LOOP}p1
 
-einfo "Mounting /dev/mapper/${LOOP}p1.."
-sudo mount -ouser,umask=0000 /dev/mapper/${LOOP}p1 "${WORK_PATH}" || exit 1
+einfo "Mounting /dev/${LOOP}.."
+mount -ouser,umask=0000 /dev/mapper/${LOOP}p1 "${WORK_PATH}" || exit 1
 
 einfo "Copying files to the FAT32 partition.."
 mkdir -p "${WORK_PATH}/boot/dtbs"
@@ -46,17 +66,5 @@ if [ -d "${BUILD_PATH}/../include/sdcard" ]; then
   einfo "Copying additional files to the FAT32 partition.."
   cp -Rf "${BUILD_PATH}/../include/sdcard/." "${WORK_PATH}"
 fi;
-
-
-einfo "Cleanup.."
-[ -n "${DEBUG}" ] && tree ${WORK_PATH}
-sleep 1
-sync
-
-sudo umount "${WORK_PATH}"
-rm -rf "${WORK_PATH}"
-
-sudo kpartx -dvs "${IMAGE}"
-sudo losetup -d /dev/${LOOP} 2>/dev/null || true
 
 exit 0

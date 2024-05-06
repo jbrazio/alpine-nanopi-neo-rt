@@ -1,6 +1,8 @@
 #!/bin/bash
 
 set -e
+set -o pipefail
+
 source config.sh
 source functions.sh
 
@@ -11,15 +13,13 @@ BASEPATH=$( dirname "$(readlink -f "${0}")" )
 [ -d "${OUTPUT_PATH}" ] || mkdir "${OUTPUT_PATH}"
 
 if [ -n "${DO_BUILD_REALTIME_KERNEL}" ]; then
-  KERNEL_VERSION=${KERNEL_VER_RT}
+  KERNEL_VERSION=${KERNEL_RT_VERSION}
 fi
 
 [ -f "${OUTPUT_PATH}/headers-${KERNEL_VERSION}.tar.gz" ] && rm "${OUTPUT_PATH}/headers-${KERNEL_VERSION}.tar.gz"
 
 einfo "Building kernel headers tarball.."
-cd "${OUTPUT_PATH}"
-tar --owner=root --group=root -czf "${BASEPATH}/${OUTPUT_PATH}/headers-${KERNEL_VERSION}.tar.gz" "usr/"
-cd "${BASEPATH}"
+cd "${OUTPUT_PATH}" && tar --owner=root --group=root -czf "${OUTPUT_PATH}/headers-${KERNEL_VERSION}.tar.gz" "usr/"
+# cd "${BASEPATH}
 
-einfo "Cleanup.."
 exit 0

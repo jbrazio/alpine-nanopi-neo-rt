@@ -1,6 +1,8 @@
 #!/bin/bash
 
 set -e
+set -o pipefail
+
 source config.sh
 source functions.sh
 
@@ -36,5 +38,5 @@ einfo "Collecting artifacts.."
 cat "${OUTPUT_PATH}/boot.cmd"
 cp -af "${BUILD_PATH}/u-boot/u-boot-${TARGET_FAMILY}-with-spl.bin" "${OUTPUT_PATH}"
 
-einfo "Cleanup.."
+einfo "Cleanup uboot.."
 exit 0

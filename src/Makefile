@@ -30,7 +30,7 @@ sdcard: uboot kernel ramdisk modloop
 .PHONY: distclean
 
 clean:
-	@rm -rf output/*
+	@./clean.sh
 
 distclean: clean
-	@rm -rf output build
+	@./distclean.sh
