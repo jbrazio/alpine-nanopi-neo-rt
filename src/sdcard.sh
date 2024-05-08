@@ -44,7 +44,7 @@ if ! [ -b "/dev/${LOOP}" ]; then
 fi
 
 einfo "Creating FAT32 filesystem.."
-mkdosfs -F 32 -I /dev/mapper/${LOOP}p1
+mkdosfs -F 32 -n "NanoPI Neo" -I /dev/mapper/${LOOP}p1
 
 einfo "Mounting /dev/${LOOP}.."
 mount -ouser,umask=0000 /dev/mapper/${LOOP}p1 "${WORK_PATH}" || exit 1
@@ -56,8 +56,7 @@ cp -f "${OUTPUT_PATH}/vmlinuz-${TARGET_FAMILY}"   "${WORK_PATH}/boot"
 cp -f "${OUTPUT_PATH}/modloop-${TARGET_FAMILY}"   "${WORK_PATH}/boot"
 cp -f "${OUTPUT_PATH}/initramfs-${TARGET_FAMILY}" "${WORK_PATH}/boot"
 cp -f "${OUTPUT_PATH}/${TARGET_DT}"               "${WORK_PATH}/boot/dtbs"
-cp -f "${OUTPUT_PATH}/alpine.apkovl.tar.gz"       "${WORK_PATH}"
-
+cp -f "${OUTPUT_PATH}/alpine.apkovl.tar.gz"       "${WORK_PATH}/alpine-neo.apkovl.tar.gz"
 cp -Rf "${OUTPUT_PATH}/apks"                      "${WORK_PATH}"
 
 mkimage -C none -A ${TARGET_ARCH} -T script -d "${OUTPUT_PATH}/boot.cmd" "${WORK_PATH}/boot/boot.scr"

@@ -9,7 +9,7 @@ OUTPUT_PATH=/out
 WORK_PATH=$(mktemp -d /tmp/work.XXXXXX)
 
 # Basic
-CORES=4
+CORES=8
 START_LBA=2048
 SECTOR_SIZE=512
 

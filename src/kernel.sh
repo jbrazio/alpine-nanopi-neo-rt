@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 set -o pipefail
 
 source config.sh
@@ -13,66 +13,72 @@ BASEPATH=$( dirname "$(readlink -f "${0}")" )
 [ -d "${OUTPUT_PATH}" ] || mkdir "${OUTPUT_PATH}"
 
 if [ -n "${DO_BUILD_REALTIME_KERNEL}" ]; then
-#  KERNEL_VERSION=${KERNEL_RT_VERSION}
-  PATCH_FILE=${KERNEL_RT_SOURCE#*-}
+	PATCH_FILE=${KERNEL_RT_SOURCE#*-}
 fi
 
 TARGET=${BUILD_PATH}/linux-${KERNEL_VERSION//v}
 
-if [ ! -f "${TARGET}.tar" ]; then
-  [ -d "${TARGET}-git" ] && rm -rf "${TARGET}-git"
-
-  einfo "Downloading kernel ${KERNEL_VERSION} source from git.."
-  git clone --depth=1 --branch "${KERNEL_VERSION}" "${KERNEL_SOURCE}" "${TARGET}-git"
-
-  einfo "Create git archive tarball.."
-  git -C "${TARGET}-git" archive --format=tar --output="${TARGET}.tar" HEAD
-fi
-
 if [ ! -d "${TARGET}" ]; then
-  mkdir "${TARGET}"
-  tar -C "${TARGET}" -xf "${TARGET}.tar"
+	einfo "Downloading kernel ${KERNEL_VERSION} source from git.."
+	git clone --depth=1 --branch "${KERNEL_VERSION}" "${KERNEL_SOURCE}" "${TARGET}"
 
-  if [ -n "${DO_BUILD_REALTIME_KERNEL}" ]; then
-    einfo "Downloading kernel ${KERNEL_RT_VERSION} real time patch.."
-    [ -f "${TARGET}/../${PATCH_FILE}" ] || wget ${KERNEL_RT_SOURCE} -O "${BUILD_PATH}/${PATCH_FILE}"
+	if [ -n "${DO_BUILD_REALTIME_KERNEL}" ]; then
+		einfo "Downloading kernel ${KERNEL_RT_VERSION} real time patch.."
+		[ -f "${TARGET}/../${PATCH_FILE}" ] || wget ${KERNEL_RT_SOURCE} -O "${BUILD_PATH}/${PATCH_FILE}"
 
-    einfo "Patching kernel with ${PATCH_FILE}.."
-    zcat "${BUILD_PATH}/${PATCH_FILE}" | patch -d "${TARGET}" -p1 -R -N --dry-run --silent 1>/dev/null 2>&1 \
-      || zcat "${BUILD_PATH}/${PATCH_FILE}" | patch -d "${TARGET}" -p1
-  fi
+		einfo "Patching kernel with ${PATCH_FILE}.."
+		zcat "${BUILD_PATH}/${PATCH_FILE}" | patch -d "${TARGET}" -p1 -R -N --dry-run --silent 1>/dev/null 2>&1 || \
+			zcat "${BUILD_PATH}/${PATCH_FILE}" | patch -d "${TARGET}" -p1
+	fi
+
+	einfo "Cleanup kernel source repository.."
+	rm -rf "${TARGET}/.git"
 fi
 
-einfo "Creating default kernel config file.."
-make -C "${TARGET}" "${TARGET_FAMILY}_defconfig"
+if [ ! -f "${TARGET}/.config" ]; then
+	einfo "Creating default kernel config file.."
+	make -C "${TARGET}" "${TARGET_FAMILY}_defconfig"
 
-einfo "Enabling the required kernel features.."
-echo "CONFIG_IPV6=m"         >> "${TARGET}/.config"
-echo "CONFIG_SQUASHFS=y"     >> "${TARGET}/.config"
-echo "CONFIG_SQUASHFS_XZ=y"  >> "${TARGET}/.config"
-echo "CONFIG_SYN_COOKIES=y"  >> "${TARGET}/.config"
-echo "CONFIG_BLK_DEV_LOOP=y" >> "${TARGET}/.config"
+	if [ -n "${DO_BUILD_REALTIME_KERNEL}" ]; then
+		einfo "Enabling RT kernel.."
+		${TARGET}/scripts/config --file "${TARGET}/.config" -e EXPERT
+		${TARGET}/scripts/config --file "${TARGET}/.config" -e CONFIG_PREEMPT_RT
+	fi
 
-echo "CONFIG_UEVENT_HELPER=y"                  >> "${TARGET}/.config"
-echo "CONFIG_UEVENT_HELPER_PATH=/sbin/hotplug" >> "${TARGET}/.config"
+	if [ -d "${BASEPATH}/include/kernel" ]; then
+		for conf in "${BASEPATH}/include/kernel"/*.conf; do
+			if [ -r "${conf}" ]; then
+				einfo "Processing kernel modules from ${conf}"
+				while IFS= read -r line; do
+					if [[ "$line" =~ ^CONFIG_ ]]; then
+						config_option=$(echo "$line" | cut -d'=' -f1)
+						config_value=$(echo "$line" | cut -d'=' -f2)
+						case "$config_value" in
+							y)
+								"${TARGET}/scripts/config" --file "${TARGET}/.config" --enable "${config_option}"
+								;;
+							m)
+								"${TARGET}/scripts/config" --file "${TARGET}/.config" --module "${config_option}"
+								;;
+							n)
+								"${TARGET}/scripts/config" --file "${TARGET}/.config" --disable "${config_option}"
+								;;
+							*)
+								"${TARGET}/scripts/config" --file "${TARGET}/.config" --set-val "${config_option}" "${config_value}"
+								;;
+						esac
+					fi
+				done < "${conf}"
+			fi
+		done
+	fi
 
-echo "CCONFIG_HOTPLUG=y"     >> "${TARGET}/.config"
-echo "CCONFIG_NETDEVICES=y"  >> "${TARGET}/.config"
-echo "CCONFIG_NET_CORE=y"    >> "${TARGET}/.config"
-echo "CCONFIG_NETCONSOLE=y"  >> "${TARGET}/.config"
-echo "CCONFIG_NET_HOTPLUG=y" >> "${TARGET}/.config"
-
-if [ -n "${DO_BUILD_REALTIME_KERNEL}" ]; then
-  echo "CONFIG_PREEMPT_RT_FULL=y" >> "${TARGET}/.config"
+	einfo "Calculating kernel dependencies.."
+	make -C "${TARGET}" olddefconfig
 fi
-
-einfo "Calculating kernel dependencies.."
-make -C "${TARGET}" olddefconfig 2>/dev/null || true
-
-einfo "Checking for DO_KERNEL_MENUCONFIG flag.."
-[ -n "${DO_KERNEL_MENUCONFIG}" ] && make -C "${TARGET}" menuconfig
 
 einfo "Building the kernel.."
+make -C "${TARGET}" clean
 make -C "${TARGET}" -j$(awk "BEGIN {print 1.5 * ${CORES}}")
 
 einfo "Installing the modules.."
